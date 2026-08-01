@@ -742,236 +742,255 @@ def handle_withdraw_account(message):
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id) == "WAITING_WITHDRAW_AMOUNT")
 def handle_withdraw_amount(message):
     uid = message.from_user.id
-    bal = user_balances.get(uid, 0.0)
-    
     try:
-        req_amount = float(message.text.strip())
+        amount = float(message.text.strip())
     except ValueError:
-        bot.send_message(message.chat.id, "⚠️ **እባክዎን ትክክለኛ የቁጥር መጠን ብቻ ያስገቡ!** (ምሳሌ፦ 100)")
+        bot.send_message(message.chat.id, "❌ እባክዎን ትክክለኛ የቁጥር መጠን ያስገቡ!")
         return
 
-    if req_amount < MIN_WITHDRAWAL:
-        bot.send_message(message.chat.id, f"❌ **ዝቅተኛው ማውጣት የሚችሉት የብር መጠን {MIN_WITHDRAWAL:.2f} ETB ነው።**")
+    bal = user_balances.get(uid, 0.0)
+    if amount < MIN_WITHDRAWAL:
+        bot.send_message(message.chat.id, f"❌ ዝቅተኛው የማውጫ መጠን **{MIN_WITHDRAWAL:.2f} ETB** ነው።")
         return
 
-    if req_amount > bal:
-        bot.send_message(message.chat.id, f"❌ **የጠየቁት የብር መጠን ከባላንስዎ ይበልጣል!**\nየእርስዎ ባላንስ: **{bal:.2f} ETB**", parse_mode="Markdown")
+    if amount > bal:
+        bot.send_message(message.chat.id, f"❌ በቂ ባላንስ የለዎትም። ወቅታዊ ባላንስዎ: **{bal:.2f} ETB**")
         return
 
-    method = withdraw_data[uid].get('method', 'Telebirr')
-    account = withdraw_data[uid].get('account', 'Unknown')
+    # Deduct balance immediately upon request creation
+    user_balances[uid] -= amount
+    socketio.emit('balance_update', {'user_id': uid, 'balance': user_balances[uid]})
 
     user_states[uid] = None
+    account_num = withdraw_data.get(uid, {}).get('account', 'N/A')
+    method = withdraw_data.get(uid, {}).get('method', 'Telebirr')
     wd_id = f"WD_{int(time.time())}_{uid}"
 
     markup = InlineKeyboardMarkup()
     markup.row(
-        InlineKeyboardButton(f"✅ Approve {req_amount:.2f} ETB", callback_data=f"wdapp_{req_amount}_{uid}_{wd_id}"),
-        InlineKeyboardButton("❌ Reject", callback_data=f"wdrej_{uid}_{wd_id}")
+        InlineKeyboardButton("✅ Confirm Paid", callback_data=f"wdapp_{amount}_{uid}_{wd_id}"),
+        InlineKeyboardButton("❌ Reject & Refund", callback_data=f"wdrej_{amount}_{uid}_{wd_id}")
     )
 
     admin_msg = (
-        f"📤 **አዲስ የዊዝድሮው ጥያቄ!**\n"
+        f"💸 **አዲስ የዊዝድሮው ጥያቄ!**\n"
         f"━━━━━━━━━━━━━━━\n"
         f"👤 ተጫዋች: {message.from_user.first_name} (`{uid}`)\n"
         f"🏦 አማራጭ: **{method}**\n"
-        f"💳 አድራሻ አካውንት: `{account}`\n"
-        f"💵 የተጠየቀው መጠን: **{req_amount:.2f} ETB**\n"
-        f"💰 ወቅታዊ ባላንስ: **{bal:.2f} ETB**"
+        f"📱 አካውንት/ስልክ: `{account_num}`\n"
+        f"💰 የተጠየቀው መጠን: **{amount:.2f} ETB**"
     )
 
     try:
         bot.send_message(ADMIN_ID, admin_msg, reply_markup=markup, parse_mode="Markdown")
-        
         bot.send_message(
-            message.chat.id, 
-            f"⏳ **የዊዝድሮው ጥያቄዎ በተሳካ ሁኔታ ተልኳል!**\n\n"
-            f"🏦 አማራጭ፦ **{method}**\n"
-            f"💳 አድራሻ አካውንት፦ `{account}`\n"
-            f"💵 የተጠየቀው መጠን፦ **{req_amount:.2f} ETB**\n\n"
-            f"ℹ️ *እስኪረጋገጥ ድረስ ጥቂት ደቂቃዎችን በትዕግስት ይጠብቁ...*",
+            message.chat.id,
+            f"✅ **የማውጣት ጥያቄዎ በተሳካ ሁኔታ ተላክቷል!**\n\n"
+            f"💰 መጠን: **{amount:.2f} ETB**\n"
+            f"📱 ወደ: `{account_num}` ({method})\n"
+            f"⏳ *አድሚኑ ክፍያውን ፈፅሞ በቅርቡ ያረጋግጥልዎታል።*",
             parse_mode="Markdown"
         )
     except Exception as e:
-        bot.send_message(message.chat.id, "❌ ጥያቄውን ማስተናገድ አልተቻለም። እባክዎን በኋላ ደግመው ይሞክሩ።")
+        bot.send_message(message.chat.id, "✅ ጥያቄዎ ተመዝግቧል!")
 
 # ---------------------------------------------------------
-# 🎛 ADMIN CALLBACK HANDLERS
+# 🛠 ADMIN APPROVAL / REJECTION CALLBACKS
 # ---------------------------------------------------------
 @bot.callback_query_handler(func=lambda call: call.data.startswith(('app_', 'rej_', 'wdapp_', 'wdrej_')))
-def handle_admin_approval(call):
-    parts = call.data.split('_')
-    action = parts[0]
-    
-    if action == "rej":
-        target_uid = int(parts[1])
-        bot.answer_callback_query(call.id, "ዲፖዚቱ ተሰርዟል!")
-        bot.edit_message_text(f"❌ **Deposit Rejected** for User `{target_uid}`", call.message.chat.id, call.message.message_id)
-        bot.send_message(target_uid, "❌ **የዲፖዚት ጥያቄዎ አልተቀበለም!**")
-    
-    elif action == "app":
-        amount_val = float(parts[1])
-        target_uid = int(parts[2])
+def handle_admin_actions(call):
+    if call.from_user.id != ADMIN_ID:
+        bot.answer_callback_query(call.id, "⛔ Authorization required!")
+        return
 
-        user_balances[target_uid] = user_balances.get(target_uid, 0.0) + amount_val
-        new_bal = user_balances[target_uid]
+    data_parts = call.data.split('_')
+    action = data_parts[0]
 
-        bot.answer_callback_query(call.id, f"{amount_val} ETB ፀድቋል!")
-        bot.edit_message_text(f"✅ **Deposit Approved!**\nUser: `{target_uid}`\nAmount: **+{amount_val} ETB**\nNew Balance: **{new_bal} ETB**", call.message.chat.id, call.message.message_id)
+    bot.answer_callback_query(call.id)
+
+    if action == "app":
+        amt = float(data_parts[1])
+        target_uid = int(data_parts[2])
+        
+        user_balances[target_uid] = user_balances.get(target_uid, 0.0) + amt
+        socketio.emit('balance_update', {'user_id': target_uid, 'balance': user_balances[target_uid]})
+        
+        bot.edit_message_caption(
+            caption=call.message.caption + f"\n\n✅ **APPROVED ({amt} ETB)**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
+        ) if call.message.photo else bot.edit_message_text(
+            text=call.message.text + f"\n\n✅ **APPROVED ({amt} ETB)**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
+        )
         
         bot.send_message(
-            target_uid, 
-            f"🎉 **ዲፖዚትዎ ፀድቋል!**\n\n"
-            f"📥 የተጨመረ: **+{amount_val:.2f} ETB**\n"
-            f"💰 አጠቃላይ ባላንስ: **{new_bal:.2f} ETB**",
-            reply_markup=main_menu_keyboard(target_uid),
+            target_uid,
+            f"🎉 **ዲፖዚትዎ ጸድቋል!**\n\n💰 **+{amt:.2f} ETB** ወደ አካውንትዎ ገቢ ሆኗል።\n"
+            f"💳 ወቅታዊ ባላንስ: **{user_balances[target_uid]:.2f} ETB**",
+            parse_mode="Markdown"
+        )
+
+    elif action == "rej":
+        target_uid = int(data_parts[1])
+        
+        bot.edit_message_caption(
+            caption=call.message.caption + "\n\n❌ **REJECTED**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
+        ) if call.message.photo else bot.edit_message_text(
+            text=call.message.text + "\n\n❌ **REJECTED**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
+        )
+        
+        bot.send_message(target_uid, "❌ **የዲፖዚት ጥያቄዎ አልፀደቀም።** እባክዎን መረጃውን አጣርተው ደግመው ይሞክሩ ወይም የደንበኞች አገልግሎትን ያናግሩ።")
+
+    elif action == "wdapp":
+        amt = float(data_parts[1])
+        target_uid = int(data_parts[2])
+
+        bot.edit_message_text(
+            text=call.message.text + f"\n\n✅ **PAID OUT ({amt:.2f} ETB)**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
+        )
+        bot.send_message(
+            target_uid,
+            f"🎉 **የወጪ ጥያቄዎ ተፈጽሟል!**\n\n💰 **{amt:.2f} ETB** ወደ አካውንትዎ ተልኳል። እናመሰግናለን!",
             parse_mode="Markdown"
         )
 
     elif action == "wdrej":
-        target_uid = int(parts[1])
-        bot.answer_callback_query(call.id, "ዊዝድሮው ተሰርዟል!")
-        bot.edit_message_text(f"❌ **Withdrawal Rejected** for User `{target_uid}`", call.message.chat.id, call.message.message_id)
-        bot.send_message(target_uid, "❌ **የዊዝድሮው ጥያቄዎ አልተቀበለም!** ተጨማሪ መረጃ ካስፈለገ አድሚኑን ያናግሩ።")
+        amt = float(data_parts[1])
+        target_uid = int(data_parts[2])
 
-    elif action == "wdapp":
-        amount_val = float(parts[1])
-        target_uid = int(parts[2])
-        current_bal = user_balances.get(target_uid, 0.0)
+        # Refund balance to player
+        user_balances[target_uid] = user_balances.get(target_uid, 0.0) + amt
+        socketio.emit('balance_update', {'user_id': target_uid, 'balance': user_balances[target_uid]})
 
-        if current_bal < amount_val:
-            bot.answer_callback_query(call.id, "⚠️ ተጫዋቹ በቂ ባላንስ የለውም!", show_alert=True)
-            return
-
-        user_balances[target_uid] -= amount_val
-        new_bal = user_balances[target_uid]
-
-        bot.answer_callback_query(call.id, f"{amount_val} ETB ዊዝድሮው ፀድቋል!")
         bot.edit_message_text(
-            f"✅ **Withdrawal Approved & Paid!**\n"
-            f"User: `{target_uid}`\n"
-            f"Amount Paid: **-{amount_val:.2f} ETB**\n"
-            f"Remaining Balance: **{new_bal:.2f} ETB**", 
-            call.message.chat.id, 
-            call.message.message_id
+            text=call.message.text + "\n\n❌ **REJECTED & REFUNDED**",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id
         )
-        
         bot.send_message(
-            target_uid, 
-            f"🎉 **ዊዝድሮው በተሳካ ሁኔታ ተቀባይነት አግኝቷል!**\n\n"
-            f"💸 የተከፈለዎት መጠን: **{amount_val:.2f} ETB**\n"
-            f"💰 የቀረው ባላንስዎ: **{new_bal:.2f} ETB**\n\n"
-            f"ገንዘቡ በተላከበት የክፍያ አካውንት ገቢ ተደርጎልዎታል። እናመሰግናለን! 🙏",
-            reply_markup=main_menu_keyboard(target_uid),
+            target_uid,
+            f"❌ **የማውጣት ጥያቄዎ አልተቀበለም።**\n\n"
+            f"💰 **{amt:.2f} ETB** ወደ ባላንስዎ ተመልሷል።\n"
+            f"💳 ወቅታዊ ባላንስ: **{user_balances[target_uid]:.2f} ETB**",
             parse_mode="Markdown"
         )
 
-def run_bot():
-    while True:
-        try:
-            bot.remove_webhook()
-            time.sleep(1)
-            bot.polling(none_stop=True)
-        except Exception as e:
-            print(f"Bot Polling Error: {e}")
-            time.sleep(3)
-
 # =========================================================
-# 6. SOCKET.IO EVENTS & REAL GAME LOOP
+# 6. WEBSOCKET EVENTS & GAME LOOP
 # =========================================================
 @socketio.on('get_user_balance')
-def handle_get_balance(data):
-    uid = int(data.get('user_id'))
-    bal = user_balances.get(uid, 0.0)
-    emit('balance_update', {'user_id': uid, 'balance': bal})
-
-@socketio.on('select_card')
-def handle_card_selection(data):
-    uid = int(data.get('user_id'))
-    card_id = int(data.get('card_id'))
-
-    if game_state['status'] not in ['WAITING', 'COUNTDOWN']:
-        emit('error_msg', {'msg': 'ጨዋታ ተጀምሯል! እባክዎን አዲስ ዙር ይበቁ።'})
-        return
-
-    current_player_cards = game_state['player_cards'].get(uid, [])
-    if len(current_player_cards) >= MAX_CARDS_PER_PLAYER:
-        emit('error_msg', {'msg': '⚠️ በአንድ ዙር ከ 2 ካርቴላ በላይ መያዝ አይቻልም!'})
-        return
-
-    bal = user_balances.get(uid, 0.0)
-    if bal < CARD_PRICE:
-        emit('error_msg', {'msg': f'በቂ ባላንስ የሎትም። እባክዎን በቦቱ ዲፖዚት ያድርጉ! (ባላንስዎ: {bal:.2f} ETB)'})
-        return
-
-    if card_id in game_state['selected_cards']:
-        emit('error_msg', {'msg': 'ይህ ካርቴላ በተခြား ተጫዋች ተይዟል!'})
-        return
-
-    user_balances[uid] -= CARD_PRICE
-    new_bal = user_balances[uid]
-
-    game_state['selected_cards'][card_id] = uid
-    if uid not in game_state['player_cards']:
-        game_state['player_cards'][uid] = []
-    game_state['player_cards'][uid].append(card_id)
-
-    total_pool = len(game_state['selected_cards']) * CARD_PRICE
-    game_state['derash'] = round(total_pool * (1 - COMMISSION_RATE), 2)
-
-    emit('card_confirmed', {'card_id': card_id, 'new_balance': new_bal}, broadcast=False)
-    socketio.emit('game_update', game_state)
+def on_get_user_balance(data):
+    uid = data.get('user_id')
+    if uid:
+        bal = user_balances.get(uid, 0.0)
+        emit('balance_update', {'user_id': uid, 'balance': bal})
 
 @socketio.on('get_preview_matrix')
-def handle_preview_matrix(data):
-    c_id = int(data.get('card_id'))
+def on_get_preview_matrix(data):
+    c_id = data.get('card_id')
     if c_id in cards_database:
         emit('receive_preview_matrix', {'card_id': c_id, 'matrix': cards_database[c_id]})
 
 @socketio.on('get_card_matrix')
-def handle_get_matrix(data):
-    c_id = int(data.get('card_id'))
+def on_get_card_matrix(data):
+    c_id = data.get('card_id')
     if c_id in cards_database:
         emit('receive_card_matrix', {'card_id': c_id, 'matrix': cards_database[c_id]})
 
+@socketio.on('select_card')
+def on_select_card(data):
+    uid = data.get('user_id')
+    c_id = data.get('card_id')
+
+    if game_state["status"] not in ["WAITING", "COUNTDOWN"]:
+        emit('error_msg', {'msg': "⚠️ ጨዋታው ተጀምሯል! እባክዎን የሚቀጥለውን ዙር ይጠብቁ።"})
+        return
+
+    if c_id in game_state["selected_cards"]:
+        emit('error_msg', {'msg': "⚠️ ይህ ካርቴላ በሌላ ተጫዋች ተይዟል!"})
+        return
+
+    p_cards = game_state["player_cards"].get(uid, [])
+    if len(p_cards) >= MAX_CARDS_PER_PLAYER:
+        emit('error_msg', {'msg': f"⚠️ በአንድ ዙር ከ {MAX_CARDS_PER_PLAYER} ካርቴላ በላይ መያዝ አይቻልም!"})
+        return
+
+    bal = user_balances.get(uid, 0.0)
+    if bal < CARD_PRICE:
+        emit('error_msg', {'msg': f"⚠️ በቂ ባላንስ የለዎትም! ካርቴላ ለመያዝ ቢያንስ {CARD_PRICE} ETB ያስፈልጋል።"})
+        return
+
+    # Deduct card price
+    user_balances[uid] -= CARD_PRICE
+    game_state["selected_cards"][c_id] = uid
+    
+    if uid not in game_state["player_cards"]:
+        game_state["player_cards"][uid] = []
+    game_state["player_cards"][uid].append(c_id)
+
+    # Calculate Pot/Derash
+    total_sales = len(game_state["selected_cards"]) * CARD_PRICE
+    game_state["derash"] = total_sales * (1.0 - COMMISSION_RATE)
+
+    emit('card_confirmed', {'card_id': c_id, 'new_balance': user_balances[uid]})
+    socketio.emit('game_update', game_state)
+
 def game_loop():
-    global game_state
+    """የቀጥታ ቢንጎ ጨዋታ ዋና ከተራፊ ክፍለ-ጊዜ (Background Thread Loop)"""
     while True:
-        game_state["status"] = "WAITING"
-        game_state["drawn_numbers"] = []
-        game_state["selected_cards"] = {}
-        game_state["player_cards"] = {}
-        game_state["derash"] = 0.0
-
-        socketio.emit('reset_game')
-
-        while len(game_state["selected_cards"]) == 0:
-            socketio.sleep(1)
-
+        # Phase 1: WAITING & COUNTDOWN
         game_state["status"] = "COUNTDOWN"
-        for t in range(15, 0, -1):
-            game_state["time_left"] = t
-            socketio.emit('timer_update', {'time_left': t, 'status': 'COUNTDOWN'})
-            socketio.sleep(1)
+        game_state["time_left"] = 15
+        
+        while game_state["time_left"] > 0:
+            socketio.emit('timer_update', {
+                'time_left': game_state["time_left"],
+                'status': game_state["status"]
+            })
+            time.sleep(1)
+            game_state["time_left"] -= 1
 
+        # Check if enough players bought cards
+        if len(game_state["selected_cards"]) == 0:
+            # Loop again if no cards selected
+            continue
+
+        # Phase 2: GAME START
         game_state["status"] = "PLAYING"
-        socketio.emit('game_started', {'status': 'PLAYING', 'derash': game_state['derash']})
-
         all_numbers = list(range(1, 76))
         random.shuffle(all_numbers)
+        game_state["drawn_numbers"] = []
 
-        drawn_set = set()
+        socketio.emit('game_started', {
+            'derash': game_state["derash"],
+            'total_cards': len(game_state["selected_cards"])
+        })
+
         winner_found = False
 
         for num in all_numbers:
             if winner_found:
                 break
 
-            drawn_set.add(num)
+            time.sleep(3)  # Ball draw interval
             game_state["drawn_numbers"].append(num)
+            drawn_set = set(game_state["drawn_numbers"])
 
-            letter = 'B' if num <= 15 else 'I' if num <= 30 else 'N' if num <= 45 else 'G' if num <= 60 else 'O'
-            ball_str = f"{letter}-{num}"
+            # Form ball call string (e.g. B-12)
+            ball_str = ""
+            if num <= 15: ball_str = f"B-{num}"
+            elif num <= 30: ball_str = f"I-{num}"
+            elif num <= 45: ball_str = f"N-{num}"
+            elif num <= 60: ball_str = f"G-{num}"
+            else: ball_str = f"O-{num}"
 
             socketio.emit('new_number', {
                 'number': num,
@@ -979,48 +998,64 @@ def game_loop():
                 'drawn_list': game_state["drawn_numbers"]
             })
 
-            for uid, cards in game_state["player_cards"].items():
-                for card_id in cards:
-                    matrix = cards_database[card_id]
-                    if check_bingo_winner(matrix, drawn_set):
-                        winner_found = True
-                        prize = game_state["derash"]
+            # Check for winners
+            for card_id, user_id in game_state["selected_cards"].items():
+                matrix = cards_database[card_id]
+                if check_bingo_winner(matrix, drawn_set):
+                    winner_found = True
+                    prize = game_state["derash"]
+                    
+                    # Award Prize
+                    user_balances[user_id] = user_balances.get(user_id, 0.0) + prize
+                    
+                    # Get Winner Name via Telegram
+                    winner_name = "Player"
+                    try:
+                        u_info = bot.get_chat(user_id)
+                        winner_name = u_info.first_name
+                    except Exception:
+                        winner_name = f"User #{user_id}"
 
-                        user_balances[uid] = user_balances.get(uid, 0.0) + prize
-                        
-                        socketio.emit('winner_announced', {
-                            "winner_name": f"User_{uid}",
-                            "prize": prize,
-                            "card_num": card_id,
-                            "card_matrix": matrix
-                        })
-
-                        try:
-                            bot.send_message(
-                                uid,
-                                f"🎉 **እንኳን ደስ አለዎት! ሎተሪው ደርሶዎታል!** 🏆\n\n"
-                                f"🃏 ያሸነፉበት ካርቴላ: **#{card_id}**\n"
-                                f"💰 ያሸነፉት ደራሽ: **+{prize:.2f} ETB**\n"
-                                f"💳 አዲሱ ባላንስዎ: **{user_balances[uid]:.2f} ETB**",
-                                parse_mode="Markdown"
-                            )
-                        except Exception as e:
-                            print(f"Winner Bot Message Failed: {e}")
-
-                        break
-                if winner_found:
+                    socketio.emit('winner_announced', {
+                        'winner_id': user_id,
+                        'winner_name': winner_name,
+                        'card_num': card_id,
+                        'card_matrix': matrix,
+                        'prize': prize
+                    })
                     break
 
-            socketio.sleep(3)
-
-        game_state["status"] = "FINISHED"
-        socketio.sleep(8)
+        # Phase 3: RESET FOR NEXT ROUND
+        time.sleep(10)  # Pause to show winner screen
+        game_state["status"] = "WAITING"
+        game_state["drawn_numbers"] = []
+        game_state["selected_cards"] = {}
+        game_state["player_cards"] = {}
+        game_state["derash"] = 0.0
+        socketio.emit('reset_game')
 
 # =========================================================
-# 7. MAIN EXECUTION
+# 7. INITIALIZATION & THREADING
 # =========================================================
-if __name__ == "__main__":
-    Thread(target=run_bot, daemon=True).start()
-    socketio.start_background_task(game_loop)
-    port = int(os.environ.get("PORT", 10000))
+def run_telebot():
+    """Telegram Bot Polling Thread"""
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=1, timeout=20)
+        except Exception as e:
+            time.sleep(5)
+
+if __name__ == '__main__':
+    # Start Telegram Bot in background
+    bot_thread = Thread(target=run_telebot)
+    bot_thread.daemon = True
+    bot_thread.start()
+
+    # Start Bingo Game Loop in background
+    game_thread = Thread(target=game_loop)
+    game_thread.daemon = True
+    game_thread.start()
+
+    # Start Flask-SocketIO Server
+    port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
