@@ -27,7 +27,7 @@ try:
 except ImportError:
     CRYPTO_AVAILABLE = False
 
-# የ SSL ማስጠንቀቂያዎችን ማጥፋት (በ IP አድራሻ ለሚሰሩ ጌትዌዮች አስፈላጊ ነው)
+# የ SSL ማስጠንቀቂያዎችን ማጥፋት
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
@@ -64,9 +64,11 @@ def generate_rsa_signature(payload_dict):
 
     private_key_str = os.environ.get("TELEBIRR_PRIVATE_KEY", "")
     if not private_key_str:
+        print("TELEBIRR_PRIVATE_KEY environment variable is missing.")
         return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
     
     try:
+        private_key_str = private_key_str.strip()
         if "-----BEGIN" not in private_key_str:
             private_key_str = f"-----BEGIN PRIVATE KEY-----\n{private_key_str}\n-----END PRIVATE KEY-----"
             
@@ -81,9 +83,8 @@ def generate_rsa_signature(payload_dict):
             if k in ['sign', 'sign_type', 'header', 'refund_info', 'openType', 'raw_request']:
                 continue
             if isinstance(v, dict):
-                for sub_k, sub_v in v.items():
-                    if sub_v is not None:
-                        flat_dict[sub_k] = str(sub_v)
+                # Dict ከሆነ ወደ JSON string ቀይሮ መያዝ ወይም Keys በቅደም ተከተል Flatten ማድረግ
+                flat_dict[k] = json.dumps(v, separators=(',', ':'))
             else:
                 if v is not None:
                     flat_dict[k] = str(v)
@@ -122,7 +123,6 @@ def apply_fabric_token():
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
-        response.raise_for_status()
         res_data = response.json()
         
         if isinstance(res_data, dict):
@@ -155,10 +155,14 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "X-APP-Key": app_id
     }
     
+    # ቴሌብር የሚፈልገውን የ amount format (2 ዴሲማል) ማስተካከያ
+    formatted_amount = "{:.2f}".format(float(amount))
+    
+    # Corrected biz_content payload Keys
     biz_content = {
         "trans_currency": "ETB",
-        "total_amount": str(amount),
-        "merch_order_id": out_trade_no,
+        "totalAmount": formatted_amount,  # total_amount ወደ totalAmount ተቀይሯል
+        "merch_order_id": str(out_trade_no),
         "appid": merchant_id,
         "merch_code": merchant_code,
         "timeout_express": "120m",
@@ -178,7 +182,6 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "method": "payment.preorder",
         "version": "1.0",
         "timestamp": timestamp,
-        **biz_content
     }
     
     signature_val = generate_rsa_signature(payload_to_sign)
@@ -196,15 +199,21 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
-        response.raise_for_status()
+        
+        # ለ Debugging የ response መረጃ መመልከቻ
+        print(f"Telebirr Order Response Code: {response.status_code}")
+        print(f"Telebirr Order Response Content: {response.text}")
+        
         res_json = response.json()
         
-        # እንደ ፎቶዎቹ ማሳያ raw_request ወይም prepay_id ሲመጣ ማስተናገድ እና ማሟላት
-        if str(res_json.get("code")) == "0":
+        if str(res_json.get("code")) == "0" or str(res_json.get("code")) == "200":
             data_content = res_json.get("data", {})
-            prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
-            
-            # የተጠየቀው የ rawRequest ቅርጸት እዚህ ጋር በቋሚነት ይዘጋጃል
+            prepay_id = ""
+            if isinstance(data_content, dict):
+                prepay_id = data_content.get("prepay_id", "")
+            elif isinstance(res_json, dict):
+                prepay_id = res_json.get("prepay_id", "")
+                
             raw_request = f"appid={merchant_id}&merch_code={merchant_code}&nonce_str={nonce_str}&prepay_id={prepay_id}&sign={signature_val}&sign_type=SHA256WithRSA&timestamp={timestamp}"
             res_json["raw_request"] = raw_request
             
@@ -233,7 +242,7 @@ def query_telebirr_order(out_trade_no):
     }
     
     biz_content = {
-        "merch_order_id": out_trade_no
+        "merch_order_id": str(out_trade_no)
     }
     
     payload_to_sign = {
@@ -242,7 +251,6 @@ def query_telebirr_order(out_trade_no):
         "method": "payment.queryorder",
         "version": "1.0",
         "timestamp": timestamp,
-        **biz_content
     }
     
     payload = {
@@ -258,7 +266,6 @@ def query_telebirr_order(out_trade_no):
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
-        response.raise_for_status()
         return response.json()
     except Exception as e:
         print("Query Order Error:", str(e))
@@ -649,7 +656,7 @@ def telebirr_callback():
                 
         merch_order_id = data.get("merch_order_id") or biz_content.get("merch_order_id")
         trade_status = data.get("trade_status") or biz_content.get("trade_status")
-        total_amount = float(data.get("total_amount") or biz_content.get("total_amount") or 0)
+        total_amount = float(data.get("total_amount") or biz_content.get("totalAmount") or biz_content.get("total_amount") or 0)
         
         if merch_order_id and merch_order_id in PROCESSED_TIDS:
             return jsonify({"code": 0, "msg": "Already processed"})
