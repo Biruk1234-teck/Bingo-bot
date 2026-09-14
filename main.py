@@ -122,6 +122,10 @@ def apply_fabric_token():
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
+        
+        if response.status_code != 200:
+            print(f"Token Error Response: {response.text}")
+            
         response.raise_for_status()
         res_data = response.json()
         
@@ -130,24 +134,26 @@ def apply_fabric_token():
             return token
         return None
     except Exception as e:
-        print("Telebirr Token API Error:", str(e))
+        print("Telebirr Token API Exception:", str(e))
         return None
 
 
 def create_telebirr_order(amount, user_phone, out_trade_no):
     access_token = apply_fabric_token()
     if not access_token:
-        return {"error": "Token generation failed"}
+        return {"success": False, "msg": "የቴሌብር አውተንቲኬሽን ቶከን ማግኘት አልተቻለም።"}
 
     url = "https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder"
     
-    merchant_id = os.environ.get("MERCHANT_ID", "930231098009602")
-    merchant_code = os.environ.get("MERCHANT_CODE", "101011")
+    merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
+    merchant_code = os.environ.get("MERCHANT_CODE", "642077")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     
     base_url = request.host_url.rstrip('/')
     timestamp = str(int(time.time() * 1000))
-    nonce_str = f"bkbingo_{int(time.time())}_{random.randint(1000, 9999)}"
+    nonce_str = f"bk_{int(time.time())}_{random.randint(1000, 9999)}"
+    
+    formatted_amount = "{:.2f}".format(float(amount))
     
     headers = {
         "Content-Type": "application/json",
@@ -157,7 +163,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     
     biz_content = {
         "trans_currency": "ETB",
-        "total_amount": str(amount),
+        "total_amount": formatted_amount,
         "merch_order_id": out_trade_no,
         "appid": merchant_id,
         "merch_code": merchant_code,
@@ -165,53 +171,47 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "trade_type": "InApp",
         "notify_url": f"{base_url}/telebirr-callback",
         "return_url": f"{base_url}/",
-        "title": "BKBINGO PRO Deposit",
+        "title": "BKBINGO Deposit",
         "business_type": "BuyGoods",
         "payee_identifier": merchant_code,
         "payee_identifier_type": "04",
         "payee_type": "5000"
     }
     
-    payload_to_sign = {
-        "nonce_str": nonce_str,
-        "biz_content": biz_content,
-        "method": "payment.preorder",
-        "version": "1.0",
-        "timestamp": timestamp,
-        **biz_content
-    }
-    
-    signature_val = generate_rsa_signature(payload_to_sign)
-
     payload = {
         "nonce_str": nonce_str,
         "biz_content": biz_content,
         "method": "payment.preorder",
         "version": "1.0",
-        "sign_type": "SHA256WithRSA",
         "timestamp": timestamp,
-        "sign": signature_val
+        "sign_type": "SHA256WithRSA"
     }
     
+    signature_val = generate_rsa_signature(payload)
+    payload["sign"] = signature_val
+
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
+        
+        if response.status_code != 200:
+            print(f"PreOrder Error Status {response.status_code}: {response.text}")
+            
         response.raise_for_status()
         res_json = response.json()
         
-        # እንደ ፎቶዎቹ ማሳያ raw_request ወይም prepay_id ሲመጣ ማስተናገድ እና ማሟላት
         if str(res_json.get("code")) == "0":
             data_content = res_json.get("data", {})
             prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
             
-            # የተጠየቀው የ rawRequest ቅርጸት እዚህ ጋር በቋሚነት ይዘጋጃል
             raw_request = f"appid={merchant_id}&merch_code={merchant_code}&nonce_str={nonce_str}&prepay_id={prepay_id}&sign={signature_val}&sign_type=SHA256WithRSA&timestamp={timestamp}"
             res_json["raw_request"] = raw_request
+            res_json["success"] = True
             
         return res_json
     except Exception as e:
         print("Telebirr Order API Error:", str(e))
-        return {"error": str(e)}
+        return {"success": False, "error": str(e)}
 
 
 def query_telebirr_order(out_trade_no):
@@ -236,24 +236,16 @@ def query_telebirr_order(out_trade_no):
         "merch_order_id": out_trade_no
     }
     
-    payload_to_sign = {
-        "nonce_str": nonce_str,
-        "biz_content": biz_content,
-        "method": "payment.queryorder",
-        "version": "1.0",
-        "timestamp": timestamp,
-        **biz_content
-    }
-    
     payload = {
         "nonce_str": nonce_str,
         "biz_content": biz_content,
         "method": "payment.queryorder",
         "version": "1.0",
         "sign_type": "SHA256WithRSA",
-        "timestamp": timestamp,
-        "sign": generate_rsa_signature(payload_to_sign)
+        "timestamp": timestamp
     }
+    
+    payload["sign"] = generate_rsa_signature(payload)
     
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
@@ -306,6 +298,7 @@ class Transaction(db.Model):
     type = db.Column(db.String(50), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending')
+    transaction_ref = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
