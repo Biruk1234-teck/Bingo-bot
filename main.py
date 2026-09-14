@@ -55,18 +55,18 @@ PROCESSED_TIDS = set()
 # ==========================================
 def generate_rsa_signature(payload_dict):
     """
-    የቴሌብር ፔይሎድ (Payload) በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት።
-    ከ sign እና sign_type ውጭ ያሉትን መለኪያዎች በፊደል ቅደም ተከተል (Alphabetical Order) አቀናጅቶ መፈረም።
+    የቴሌብር PreOrder Signature ማዘጋጃ: 
+    Key-Value ጥንዶችን በ Alphabetical ቅደም ተከተል String አድርጎ በ RSA-SHA256 መፈረም::
     """
     if not CRYPTO_AVAILABLE:
-        print("Cryptography library is not installed.")
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE"
 
     private_key_str = os.environ.get("TELEBIRR_PRIVATE_KEY", "")
     if not private_key_str:
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE"
     
     try:
+        private_key_str = private_key_str.strip()
         if "-----BEGIN" not in private_key_str:
             private_key_str = f"-----BEGIN PRIVATE KEY-----\n{private_key_str}\n-----END PRIVATE KEY-----"
             
@@ -76,20 +76,17 @@ def generate_rsa_signature(payload_dict):
             backend=default_backend()
         )
         
-        flat_dict = {}
-        for k, v in payload_dict.items():
-            if k in ['sign', 'sign_type', 'header', 'refund_info', 'openType', 'raw_request']:
-                continue
-            if isinstance(v, dict):
-                for sub_k, sub_v in v.items():
-                    if sub_v is not None:
-                        flat_dict[sub_k] = str(sub_v)
-            else:
-                if v is not None:
-                    flat_dict[k] = str(v)
-
-        sorted_keys = sorted(flat_dict.keys())
-        canonical_pairs = [f"{k}={flat_dict[k]}" for k in sorted_keys if flat_dict[k] != ""]
+        # sign እና sign_type መገለል አለባቸው
+        sorted_keys = sorted([k for k in payload_dict.keys() if k not in ['sign', 'sign_type']])
+        
+        canonical_pairs = []
+        for k in sorted_keys:
+            val = payload_dict[k]
+            if isinstance(val, dict):
+                val = json.dumps(val, separators=(',', ':'))
+            if val is not None and str(val) != "":
+                canonical_pairs.append(f"{k}={val}")
+                
         canonical_content = "&".join(canonical_pairs)
         
         signature = private_key.sign(
@@ -100,7 +97,7 @@ def generate_rsa_signature(payload_dict):
         return base64.b64encode(signature).decode('utf-8')
     except Exception as e:
         print("RSA Signing Error:", str(e))
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE"
 
 
 def apply_fabric_token():
@@ -137,7 +134,7 @@ def apply_fabric_token():
 def create_telebirr_order(amount, user_phone, out_trade_no):
     access_token = apply_fabric_token()
     if not access_token:
-        return {"error": "Token generation failed"}
+        return {"error": "የአክሰስ ቶከን ማግኘት አልተቻለም (Token failed)"}
 
     url = "https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder"
     
@@ -155,37 +152,42 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "X-APP-Key": app_id
     }
     
-    biz_content = {
+    # 1. Total Amount በ 2 decimal string የተቀረፀ መሆን አለበት
+    formatted_amount = "{:.2f}".format(float(amount))
+    
+    biz_content_dict = {
         "trans_currency": "ETB",
-        "total_amount": str(amount),
-        "merch_order_id": out_trade_no,
+        "totalAmount": formatted_amount,
+        "merch_order_id": str(out_trade_no),
         "appid": merchant_id,
         "merch_code": merchant_code,
         "timeout_express": "120m",
         "trade_type": "InApp",
         "notify_url": f"{base_url}/telebirr-callback",
         "return_url": f"{base_url}/",
-        "title": "BKBINGO PRO Deposit",
+        "title": "BKBINGO Deposit",
         "business_type": "BuyGoods",
         "payee_identifier": merchant_code,
         "payee_identifier_type": "04",
         "payee_type": "5000"
     }
     
+    # 2. biz_content Stringify ተደርጎ ይዘጋጃል
+    biz_content_str = json.dumps(biz_content_dict, separators=(',', ':'))
+    
     payload_to_sign = {
         "nonce_str": nonce_str,
-        "biz_content": biz_content,
+        "biz_content": biz_content_str,
         "method": "payment.preorder",
         "version": "1.0",
         "timestamp": timestamp,
-        **biz_content
     }
     
     signature_val = generate_rsa_signature(payload_to_sign)
 
     payload = {
         "nonce_str": nonce_str,
-        "biz_content": biz_content,
+        "biz_content": biz_content_str,
         "method": "payment.preorder",
         "version": "1.0",
         "sign_type": "SHA256WithRSA",
@@ -195,23 +197,26 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
+        # raise_for_status() ባለመጠቀማችን Response 400 ቢሆንም ዝርዝር ስህተቱን በ JSON እናገኘዋለን
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
-        response.raise_for_status()
-        res_json = response.json()
         
-        # እንደ ፎቶዎቹ ማሳያ raw_request ወይም prepay_id ሲመጣ ማስተናገድ እና ማሟላት
-        if str(res_json.get("code")) == "0":
+        res_json = response.json()
+        print("DEBUG Telebirr API Response:", res_json)
+        
+        if str(res_json.get("code")) in ["0", "200"]:
             data_content = res_json.get("data", {})
-            prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
+            prepay_id = data_content.get("prepay_id", "") if isinstance(data_content, dict) else res_json.get("prepay_id", "")
             
-            # የተጠየቀው የ rawRequest ቅርጸት እዚህ ጋር በቋሚነት ይዘጋጃል
             raw_request = f"appid={merchant_id}&merch_code={merchant_code}&nonce_str={nonce_str}&prepay_id={prepay_id}&sign={signature_val}&sign_type=SHA256WithRSA&timestamp={timestamp}"
             res_json["raw_request"] = raw_request
+            res_json["success"] = True
+            return res_json
+        else:
+            return {"success": False, "msg": res_json.get("msg", "ከቴሌብር የተመለሰ ስህተት አለ"), "details": res_json}
             
-        return res_json
     except Exception as e:
         print("Telebirr Order API Error:", str(e))
-        return {"error": str(e)}
+        return {"success": False, "msg": f"የቴሌብር ጥያቄ ማድረስ አልተቻለም: {str(e)}"}
 
 
 def query_telebirr_order(out_trade_no):
