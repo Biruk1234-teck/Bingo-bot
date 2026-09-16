@@ -138,14 +138,11 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     if not access_token:
         return {"error": "Token generation failed"}
 
-    # 1. ትክክለኛውን የጌትዌይ አድራሻ ከ Environment Variable ወይም ከቋሚ ዩአርኤል እንወስዳለን
-    base_gateway = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
-    
-    # 2. ትክክለኛው የቅድመ-ትዕዛዝ (PreOrder) መጨረሻ ዱካ (Path)
-    url = f"{base_gateway}/v1/merchant/preOrder"
+    # ጌትዌዩ ከዚህ በታች ባለው መልኩ ብቻ ይጠቀሙ (ድጋሚ /payment/ እንዳይኖር)
+    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
     
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
-    merchant_code = os.environ.get("MERCHANT_CODE", "609446") # ወይም ትክክለኛው መርቻ ኮድዎ
+    merchant_code = os.environ.get("MERCHANT_CODE", "642077")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     
     host_url = request.host_url.rstrip('/')
@@ -158,7 +155,6 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "X-APP-Key": app_id
     }
     
-    # biz_content ለ ክፍያ ጥያቄ
     biz_content = {
         "trans_currency": "ETB",
         "total_amount": str(amount),
@@ -208,6 +204,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         print("Telebirr Order API Exception:", str(e))
         return {"error": str(e)}
 
+        
         
 
 
