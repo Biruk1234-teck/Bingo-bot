@@ -139,8 +139,8 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         return {"error": "Token generation failed"}
 
     # ጌትዌዩ ከዚህ በታች ባለው መልኩ ብቻ ይጠቀሙ (ድጋሚ /payment/ እንዳይኖር)
-    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
-    
+   url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
+ 
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
