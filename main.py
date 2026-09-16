@@ -132,11 +132,7 @@ def apply_fabric_token():
         print("Telebirr Token API Error:", str(e))
         return None
 
-
 def create_telebirr_order(amount, user_phone, out_trade_no):
-    """
-    የተስተካከለው የቴሌብር PreOrder ጥያቄ አወቃቀር (400 Bad Request እንዳይመጣ የተደረገ)
-    """
     access_token = apply_fabric_token()
     if not access_token:
         return {"error": "Token generation failed"}
@@ -144,7 +140,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
     url = f"{base_url}/v1/merchant/preOrder"
     
-    merchant_id = os.environ.get("MERCHANT_ID", "930231098009602")
+    merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     
@@ -158,6 +154,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "X-APP-Key": app_id
     }
     
+    # 1. biz_content (ለብቻው የሚቀመጥ)
     biz_content = {
         "trans_currency": "ETB",
         "total_amount": str(amount),
@@ -175,25 +172,25 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "payee_type": "5000"
     }
     
+    # 2. ለፊርማ የሚያስፈልገው ትክክለኛ ማሰባሰቢያ (Payload to sign)
+    # ቴሌብር ፊርማ ሲሰራ biz_content ውስጥ ያሉትን እና የውጪውን መለኪያዎች በአንድ ላይ በማድረግ ፊርማ ያሰላል
     payload_to_sign = {
-        "nonce_str": nonce_str,
-        "biz_content": biz_content,
-        "method": "payment.preorder",
-        "version": "1.0",
+        "appId": app_id,
+        "nonceStr": nonce_str,
         "timestamp": timestamp,
         **biz_content
     }
     
     signature_val = generate_rsa_signature(payload_to_sign)
 
+    # 3. ዋናው የሚላከው ፖይሎድ
     payload = {
-        "nonce_str": nonce_str,
-        "biz_content": biz_content,
-        "method": "payment.preorder",
-        "version": "1.0",
-        "sign_type": "SHA256WithRSA",
+        "appId": app_id,
+        "nonceStr": nonce_str,
+        "sign": signature_val,
+        "signType": "SHA256WithRSA",
         "timestamp": timestamp,
-        "sign": signature_val
+        "bizContent": json.dumps(biz_content)  # bizContent እንደ string መላክ አለበት
     }
     
     try:
@@ -205,18 +202,13 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
             return {"error": f"API Error: {response.status_code} - {response.text}"}
             
         res_json = response.json()
-        
-        if str(res_json.get("code")) == "0":
-            data_content = res_json.get("data", {})
-            prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
-            
-            raw_request = f"appid={merchant_id}&merch_code={merchant_code}&nonce_str={nonce_str}&prepay_id={prepay_id}&sign={signature_val}&sign_type=SHA256WithRSA&timestamp={timestamp}"
-            res_json["raw_request"] = raw_request
-            
         return res_json
     except Exception as e:
         print("Telebirr Order API Exception:", str(e))
         return {"error": str(e)}
+
+
+        
 
 
 def query_telebirr_order(out_trade_no):
