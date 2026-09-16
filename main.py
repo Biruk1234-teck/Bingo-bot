@@ -145,7 +145,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     url = f"{base_gateway}/v1/merchant/preOrder"
     
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
-    merchant_code = os.environ.get("MERCHANT_CODE", "642077") # ወይም ትክክለኛው መርቻ ኮድዎ
+    merchant_code = os.environ.get("MERCHANT_CODE", "609446") # ወይም ትክክለኛው መርቻ ኮድዎ
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     
     host_url = request.host_url.rstrip('/')
