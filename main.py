@@ -135,6 +135,9 @@ def apply_fabric_token():
 
 
 def create_telebirr_order(amount, user_phone, out_trade_no):
+    """
+    የተስተካከለው የቴሌብር PreOrder ፋንክሽን
+    """
     access_token = apply_fabric_token()
     if not access_token:
         return {"error": "Token generation failed"}
@@ -172,6 +175,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         "payee_type": "5000"
     }
     
+    # ፊርማ ለማመንጨት ፔይሎዱን እና biz_content አብሮ ማቀናጀት
     payload_to_sign = {
         "nonce_str": nonce_str,
         "biz_content": biz_content,
@@ -199,12 +203,11 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
         response.raise_for_status()
         res_json = response.json()
         
-        # እንደ ፎቶዎቹ ማሳያ raw_request ወይም prepay_id ሲመጣ ማስተናገድ እና ማሟላት
+        # prepay_id ሲመጣ raw_request ን በትክክል ማዋቀር
         if str(res_json.get("code")) == "0":
             data_content = res_json.get("data", {})
             prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
             
-            # የተጠየቀው የ rawRequest ቅርጸት እዚህ ጋር በቋሚነት ይዘጋጃል
             raw_request = f"appid={merchant_id}&merch_code={merchant_code}&nonce_str={nonce_str}&prepay_id={prepay_id}&sign={signature_val}&sign_type=SHA256WithRSA&timestamp={timestamp}"
             res_json["raw_request"] = raw_request
             
