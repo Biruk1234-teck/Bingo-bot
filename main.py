@@ -144,9 +144,10 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
 
     url = "https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder"
     
-    merchant_id = os.environ.get("MERCHANT_ID", "930231098009602")
-    merchant_code = os.environ.get("MERCHANT_CODE", "101011")
-    app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
+    merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
+    merchant_code = os.environ.get("MERCHANT_CODE", "642077")
+    merchant_code = os.environ.get("MERCHANT_CODE", "609446")
+    app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505  ")
     
     base_url = request.host_url.rstrip('/')
     timestamp = str(int(time.time() * 1000))
@@ -397,14 +398,14 @@ def handle_register_user(data):
             email=email,
             phone=phone,
             password=password,
-            balance=50.00
+            balance=10.00
         )
         db.session.add(user)
         db.session.commit()
 
         emit('auth_response', {
             'success': True,
-            'msg': 'ምዝገባው በተሳካ ሁኔታ ተጠናቋል! 50 ብር ቦነስ ተሰጥቶዎታል።',
+            'msg': 'ምዝገባው በተሳካ ሁኔታ ተጠናቋል! 10 ብር ቦነስ ተሰጥቶዎታል።',
             'user_id': user.user_id,
             'balance': user.balance,
             'full_name': user.full_name
