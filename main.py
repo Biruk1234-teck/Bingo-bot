@@ -137,8 +137,8 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     if not access_token:
         return {"error": "Token generation failed"}
 
-    base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
-    //url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
+   # base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
+    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
     
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
