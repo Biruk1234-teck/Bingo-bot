@@ -18,7 +18,7 @@ from sqlalchemy import func
 import requests
 import urllib3
 
-# cryptography ሞጁል በትክክለኛ መጫኑን በማረጋገጥ ስህተት እንዳይፈጥር በጥንቃቄ መያዝ
+# cryptography ሞጁል ለደህንነት ፊርማ (RSA Signature)
 try:
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding
@@ -27,7 +27,6 @@ try:
 except ImportError:
     CRYPTO_AVAILABLE = False
 
-# የ SSL ማስጠንቀቂያዎችን ማጥፋት (በ IP አድራሻ ለሚሰሩ ጌትዌዮች አስፈላጊ ነው)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
@@ -51,20 +50,18 @@ PROCESSED_TIDS = set()
 
 
 # ==========================================
-# Telebirr Integration & RSA Signing Functions
+# Telebirr Authentication & RSA Signing
 # ==========================================
 def generate_rsa_signature(payload_dict):
     """
-    የቴሌብር ፔይሎድ (Payload) በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት።
-    ከ sign እና sign_type ውጭ ያሉትን መለኪያዎች በፊደል ቅደም ተከተል (Alphabetical Order) አቀናጅቶ መፈረም።
+    የቴሌብር ፔይሎድ በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት።
     """
     if not CRYPTO_AVAILABLE:
-        print("Cryptography library is not installed.")
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE_TO_BE_REPLACED"
 
     private_key_str = os.environ.get("TELEBIRR_PRIVATE_KEY", "")
     if not private_key_str:
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE_TO_BE_REPLACED"
     
     try:
         if "-----BEGIN" not in private_key_str:
@@ -100,12 +97,14 @@ def generate_rsa_signature(payload_dict):
         return base64.b64encode(signature).decode('utf-8')
     except Exception as e:
         print("RSA Signing Error:", str(e))
-        return "DUMMY_SIGNATURE_TO_BE_REPLACED_OR_GENERATED_VIA_RSA"
+        return "DUMMY_SIGNATURE_TO_BE_REPLACED"
 
 
 def apply_fabric_token():
-    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/token"
-    
+    """
+    ትክክለኛውን የቴሌብር applyh5token አገልግሎት መጠቀም
+    """
+    base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     app_secret = os.environ.get("APP_SECRET", "fad0f06383c6297f545876694b974599")
     
@@ -121,7 +120,7 @@ def apply_fabric_token():
     
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
-        response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
+        response = requests.post(f"{base_url}/payment/v1/token", json=payload, headers=headers, verify=verify_ssl, timeout=30)
         response.raise_for_status()
         res_data = response.json()
         
@@ -136,20 +135,20 @@ def apply_fabric_token():
 
 def create_telebirr_order(amount, user_phone, out_trade_no):
     """
-    የተስተካከለው የቴሌብር PreOrder ፋንክሽን
+    የተስተካከለው የቴሌብር PreOrder ጥያቄ አወቃቀር (400 Bad Request እንዳይመጣ የተደረገ)
     """
     access_token = apply_fabric_token()
     if not access_token:
         return {"error": "Token generation failed"}
 
-    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/payment/v1/merchant/preOrder"
+    base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
+    url = f"{base_url}/v1/merchant/preOrder"
     
-    merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
+    merchant_id = os.environ.get("MERCHANT_ID", "930231098009602")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
-    merchant_code = os.environ.get("MERCHANT_CODE", "609446")
-    app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505  ")
+    app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     
-    base_url = request.host_url.rstrip('/')
+    host_url = request.host_url.rstrip('/')
     timestamp = str(int(time.time() * 1000))
     nonce_str = f"bkbingo_{int(time.time())}_{random.randint(1000, 9999)}"
     
@@ -162,21 +161,20 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     biz_content = {
         "trans_currency": "ETB",
         "total_amount": str(amount),
-        "merch_order_id": out_trade_no,
-        "appid": merchant_id,
-        "merch_code": merchant_code,
+        "merch_order_id": str(out_trade_no),
+        "appid": str(merchant_id),
+        "merch_code": str(merchant_code),
         "timeout_express": "120m",
         "trade_type": "InApp",
-        "notify_url": f"{base_url}/telebirr-callback",
-        "return_url": f"{base_url}/",
+        "notify_url": f"{host_url}/telebirr-callback",
+        "return_url": f"{host_url}/",
         "title": "BKBINGO PRO Deposit",
         "business_type": "BuyGoods",
-        "payee_identifier": merchant_code,
+        "payee_identifier": str(merchant_code),
         "payee_identifier_type": "04",
         "payee_type": "5000"
     }
     
-    # ፊርማ ለማመንጨት ፔይሎዱን እና biz_content አብሮ ማቀናጀት
     payload_to_sign = {
         "nonce_str": nonce_str,
         "biz_content": biz_content,
@@ -201,10 +199,13 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
         response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
-        response.raise_for_status()
+        
+        if response.status_code != 200:
+            print("Telebirr PreOrder Error Response:", response.text)
+            return {"error": f"API Error: {response.status_code} - {response.text}"}
+            
         res_json = response.json()
         
-        # prepay_id ሲመጣ raw_request ን በትክክል ማዋቀር
         if str(res_json.get("code")) == "0":
             data_content = res_json.get("data", {})
             prepay_id = data_content.get("prepay_id") if isinstance(data_content, dict) else res_json.get("prepay_id")
@@ -214,7 +215,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
             
         return res_json
     except Exception as e:
-        print("Telebirr Order API Error:", str(e))
+        print("Telebirr Order API Exception:", str(e))
         return {"error": str(e)}
 
 
@@ -270,7 +271,7 @@ def query_telebirr_order(out_trade_no):
 
 
 # ==========================================
-# Database Models
+# Database Models & Game Logic
 # ==========================================
 class User(db.Model):
     __tablename__ = 'users'
@@ -292,17 +293,6 @@ class AdminUser(db.Model):
     password = db.Column(db.String(200), nullable=False)
 
 
-class Deposit(db.Model):
-    __tablename__ = 'deposits'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    transaction_ref = db.Column(db.String(100), nullable=True)
-    sms_text = db.Column(db.Text, nullable=True)
-    method = db.Column(db.String(50), nullable=True)
-    status = db.Column(db.String(20), default='Pending')
-
-
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True)
@@ -310,6 +300,7 @@ class Transaction(db.Model):
     type = db.Column(db.String(50), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending')
+    transaction_ref = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
