@@ -188,7 +188,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user"></i> Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="/admin-logout"><i class="fa-solid fa-right-from-bracket"></i> ውጣ (Logout)</a></li>
+                        <li><a class="dropdown-item text-danger" href="/admin-login"><i class="fa-solid fa-right-from-bracket"></i> ውጣ (Logout)</a></li>
                     </ul>
                 </div>
             </div>
@@ -450,6 +450,58 @@
                 console.error('Error:', err);
                 alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
             });
+        }
+
+        // User Status Toggle Helper Handler Function
+        function toggleUserStatus(userId, actionType) {
+            const formData = new FormData();
+            formData.append('action', actionType);
+
+            fetch('/admin/user/action/' + userId, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('ስህተት: ' + (data.message || 'ክዋኔው አልተሳካም'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
+            });
+        }
+
+        // Add Balance Helper Handler Function
+        function openEditUser(userId) {
+            const amount = prompt("ለተጠቃሚው መጨመር የሚፈልጉትን የገንዘብ መጠን (ETB) ያስገቡ:");
+            if (amount !== null && amount.trim() !== "") {
+                const formData = new FormData();
+                formData.append('action', 'add_balance');
+                formData.append('amount', amount);
+
+                fetch('/admin/user/action/' + userId, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('ስህተት: ' + (data.message || 'ገንዘብ መጨመር አልተቻለም'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
+                });
+            }
         }
 
         // Live Search Filter Handler
