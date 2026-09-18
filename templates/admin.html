@@ -14,20 +14,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root {
-            --sidebar-width: 280px;
-            --sidebar-bg: #0f172a;
+            --sidebar-width: 260px;
+            --sidebar-bg: #090d16;
             --primary-color: #2563eb;
-            --main-bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
+            --main-bg: #0b0f19;
+            --card-bg: #111827;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1f2937;
         }
         body {
             background-color: var(--main-bg);
             color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            overflow-x: hidden;
         }
         /* Sidebar Styles */
         #sidebar {
@@ -41,102 +42,165 @@
             transition: all 0.3s;
             z-index: 1000;
             overflow-y: auto;
+            border-right: 1px solid var(--border-color);
         }
         .sidebar-brand {
             padding: 20px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #1e293b;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            background: #0f172a;
         }
-        .sidebar-brand span { color: #38bdf8; font-size: 12px; display: block; }
+        .sidebar-brand img { height: 32px; }
         
         #sidebar .nav-link {
-            color: #94a3b8;
+            color: var(--text-muted);
             padding: 10px 15px;
-            margin: 3px 10px;
+            margin: 4px 12px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             transition: 0.2s;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
         }
         #sidebar .nav-link:hover, #sidebar .nav-link.active {
             color: #fff;
             background: var(--primary-color);
         }
+        #sidebar .nav-link .left-icon {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         #sidebar .nav-link i {
-            width: 20px;
+            width: 18px;
             text-align: center;
+        }
+        .submenu {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin: 0 12px 5px 12px;
+            padding: 5px 0;
+        }
+        .submenu .nav-link {
+            padding: 6px 15px 6px 40px;
+            margin: 2px 5px;
+            font-size: 12px;
         }
 
         /* Main Content */
         #content {
             margin-left: var(--sidebar-width);
-            padding: 30px;
+            padding: 25px;
             transition: all 0.3s;
         }
         .top-navbar {
             background: var(--card-bg);
-            padding: 15px 25px;
+            padding: 12px 20px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .search-box {
-            background: #fff;
+            background: #0b0f19;
             border: 1px solid var(--border-color);
-            padding: 8px 15px;
+            padding: 6px 15px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             gap: 10px;
-            width: 300px;
+            width: 320px;
         }
         .search-box input {
             border: none;
             outline: none;
             width: 100%;
-            font-size: 14px;
+            font-size: 13px;
+            background: transparent;
+            color: #fff;
         }
         .card-custom {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             padding: 20px;
+            color: var(--text-main);
         }
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%);
+            border: 1px solid #3b82f6;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-card-box .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
         }
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
+            color: var(--text-main);
         }
         .data-table th, .data-table td {
-            padding: 12px;
+            padding: 10px 12px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
-        .data-table th { background: #f1f5f9; font-weight: 600; }
-        .btn-custom {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
+        .data-table th { background: #0b0f19; font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        .quick-action-btn {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+            text-decoration: none;
+            text-align: left;
         }
+        .quick-action-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .activity-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -144,30 +208,117 @@
     <!-- Sidebar -->
     <nav id="sidebar">
         <div class="sidebar-brand">
-            <i class="fa-solid fa-shield-halved text-warning"></i>
+            <i class="fa-solid fa-crown text-warning fs-4"></i>
             <div>
-                BKBINGO PRO
-                <span>Enterprise Admin</span>
+                <strong>BKBINGO</strong>
+                <span class="d-block text-muted" style="font-size: 10px;">Play • Win • Grow</span>
             </div>
         </div>
-        <ul class="nav flex-column mt-3 nav-pills" id="adminTabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#dashboard-tab"><i class="fa-solid fa-chart-line"></i> 🏠 Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/admin/users"><i class="fa-solid fa-users"></i> 👥 Users & KYC</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#games-tab"><i class="fa-solid fa-gamepad"></i> 🎮 Games & Rooms</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#finance-tab"><i class="fa-solid fa-wallet"></i> 💰 Finance & Wallets</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#payments-tab"><i class="fa-solid fa-money-bill-transfer"></i> 💳 Payments & Gateways</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#bonuses-tab"><i class="fa-solid fa-gift"></i> 🎁 Bonuses & Promo</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#marketing-tab"><i class="fa-solid fa-bullhorn"></i> 📢 Marketing & SMS</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#agents-tab"><i class="fa-solid fa-handshake"></i> 🤝 Agents & Affiliates</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#support-tab"><i class="fa-solid fa-headset"></i> 🎧 Support & Live Chat</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#reports-tab"><i class="fa-solid fa-file-invoice-dollar"></i> 📊 Reports & Analytics</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#security-tab"><i class="fa-solid fa-shield-halved"></i> 🛡️ Security & IP Logs</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#roles-tab"><i class="fa-solid fa-user-gear"></i> 👨‍💼 Admin & Roles</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#api-tab"><i class="fa-solid fa-plug"></i> 🔌 API & Integrations</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#settings-tab"><i class="fa-solid fa-gear"></i> ⚙️ System Settings</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#audit-tab"><i class="fa-solid fa-scroll"></i> 📜 Audit Logs</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#monitoring-tab"><i class="fa-solid fa-server"></i> 🗄️ System Monitoring</a></li>
+        <ul class="nav flex-column mt-2" id="adminTabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#dashboard-tab"><span class="left-icon"><i class="fa-solid fa-house text-primary"></i> Dashboard</span></a></li>
+            
+            <!-- Users Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#usersSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-users text-info"></i> Users</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="usersSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">All Users</a></li>
+                        <li><a class="nav-link" href="#">KYC</a></li>
+                        <li><a class="nav-link" href="#">Active Users</a></li>
+                        <li><a class="nav-link" href="#">Suspended Users</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Games Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#gamesSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-gamepad text-success"></i> Games</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="gamesSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">All Games</a></li>
+                        <li><a class="nav-link" href="#">Bingo</a></li>
+                        <li><a class="nav-link" href="#">Game Rounds</a></li>
+                        <li><a class="nav-link" href="#">Results</a></li>
+                        <li><a class="nav-link" href="#">Winners</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Finance Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#financeSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-wallet text-warning"></i> Finance</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="financeSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">Deposits</a></li>
+                        <li><a class="nav-link" href="#">Withdrawals</a></li>
+                        <li><a class="nav-link" href="#">Wallets</a></li>
+                        <li><a class="nav-link" href="#">Transactions</a></li>
+                        <li><a class="nav-link" href="#">Revenue</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Payments Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#paymentsSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-credit-card text-danger"></i> Payments</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="paymentsSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">Telebirr</a></li>
+                        <li><a class="nav-link" href="#">Banks</a></li>
+                        <li><a class="nav-link" href="#">Gateways</a></li>
+                        <li><a class="nav-link" href="#">Payment Logs</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#bonuses-tab"><span class="left-icon"><i class="fa-solid fa-gift text-info"></i> Bonuses & Promotions</span></a></li>
+            
+            <!-- Marketing Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#marketingSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-bullhorn text-primary"></i> Marketing</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="marketingSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">Campaigns</a></li>
+                        <li><a class="nav-link" href="#">SMS & Push</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#agents-tab"><span class="left-icon"><i class="fa-solid fa-handshake text-success"></i> Agents & Affiliates</span></a></li>
+            
+            <!-- Support Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="collapse" href="#supportSubmenu" role="button">
+                    <span class="left-icon"><i class="fa-solid fa-headset text-warning"></i> Support</span>
+                    <i class="fa-solid fa-chevron-down small"></i>
+                </a>
+                <div class="collapse submenu" id="supportSubmenu">
+                    <ul class="nav flex-column">
+                        <li><a class="nav-link" href="#">Live Chat</a></li>
+                        <li><a class="nav-link" href="#">Tickets</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#reports-tab"><span class="left-icon"><i class="fa-solid fa-chart-pie text-danger"></i> Reports & Analytics</span></a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#security-tab"><span class="left-icon"><i class="fa-solid fa-shield-halved text-info"></i> Security</span></a></li>
         </ul>
+        <div class="p-3 text-muted" style="font-size: 11px;">BKBINGO Admin Panel v1.0.0</div>
     </nav>
 
     <!-- Main Content -->
@@ -176,19 +327,23 @@
         <div class="top-navbar">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass text-muted"></i>
-                <input type="text" id="adminSearchInput" placeholder="ፈልግ (Search users, transactions)...">
+                <input type="text" id="adminSearchInput" placeholder="Search users, games, transactions...">
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-danger">🔔 5</span>
-                <span class="badge bg-primary">✉️ 3</span>
+                <span class="text-muted small"><i class="fa-regular fa-calendar"></i> Apr 26, 2026 10:24 AM</span>
+                <button class="btn btn-sm btn-dark position-relative"><i class="fa-regular fa-bell"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">3</span></button>
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fa-solid fa-user-shield"></i> Biruk Reta
+                    <button class="btn btn-dark btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                        <span class="bg-primary rounded-circle text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 12px;">AD</span>
+                        <div class="text-start lh-1">
+                            <span class="d-block fw-bold" style="font-size: 12px;">Admin</span>
+                            <span class="text-muted" style="font-size: 10px;">Super Admin</span>
+                        </div>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                         <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user"></i> Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="/admin-login"><i class="fa-solid fa-right-from-bracket"></i> ውጣ (Logout)</a></li>
+                        <li><a class="dropdown-item text-danger" href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -197,199 +352,341 @@
         <!-- Tab Content Containers -->
         <div class="tab-content">
             
-            <!-- 1. DASHBOARD TAB -->
+            <!-- DASHBOARD TAB -->
             <div class="tab-pane fade show active" id="dashboard-tab">
-                <div class="row">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card card-custom stat-card p-3">
-                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">አጠቃላይ ተጠቃሚዎች</div>
-                            <div class="h4 mb-0 fw-bold" id="totalUsers">{{ total_users }}</div>
+                
+                <!-- Welcome Banner -->
+                <div class="card card-custom welcome-banner p-4 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="fw-bold mb-1"><i class="fa-solid fa-crown text-warning"></i> Welcome Back, Admin!</h3>
+                            <p class="text-muted mb-0 small">Here's what's happening with your platform today.</p>
                         </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card card-custom stat-card border-success p-3">
-                            <div class="text-xs fw-bold text-success text-uppercase mb-1">አጠቃላይ ጨዋታዎች</div>
-                            <div class="h4 mb-0 fw-bold">{{ total_orders }}</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card card-custom stat-card border-warning p-3">
-                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">አጠቃላይ ገቢ (Revenue)</div>
-                            <div class="h4 mb-0 fw-bold" id="totalRevenue">{{ "%.2f"|format(total_revenue) }} ETB</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card card-custom stat-card border-danger p-3">
-                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">ንጹህ ትርፍ (Profit)</div>
-                            <div class="h4 mb-0 fw-bold">{{ "%.2f"|format(total_profit) }} ETB</div>
+                        <div class="col-md-4 text-end d-none d-md-block">
+                            <i class="fa-solid fa-chart-line text-primary opacity-25" style="font-size: 60px;"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts & Pending Deposits Row -->
+                <!-- Statistics Grid (8 Cards) & Quick Actions -->
                 <div class="row">
-                    <div class="col-xl-8 col-lg-7">
-                        <div class="card card-custom p-4">
-                            <h5 class="card-title mb-3">የሽያጭ አጠቃላይ እይታ (Sales Overview)</h5>
-                            <canvas id="salesChart" height="130"></canvas>
+                    <div class="col-xl-9">
+                        <div class="row g-3 mb-4">
+                            <!-- 1. Total Users -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Total Users</span>
+                                            <h4 class="fw-bold mb-0">125,860</h4>
+                                        </div>
+                                        <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-users"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 12.5% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 2. Active Users -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Active Users</span>
+                                            <h4 class="fw-bold mb-0">98,432</h4>
+                                        </div>
+                                        <div class="icon-circle bg-success bg-opacity-10 text-success"><i class="fa-solid fa-user-check"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 10.2% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 3. Total Deposits -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Total Deposits</span>
+                                            <h4 class="fw-bold mb-0">$248,750</h4>
+                                        </div>
+                                        <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-wallet"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 18.7% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 4. Total Withdrawals -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Total Withdrawals</span>
+                                            <h4 class="fw-bold mb-0">$176,230</h4>
+                                        </div>
+                                        <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 16.3% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 5. Total Revenue -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Total Revenue</span>
+                                            <h4 class="fw-bold mb-0">$72,520</h4>
+                                        </div>
+                                        <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-chart-line"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 22.1% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 6. Games Played -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Games Played</span>
+                                            <h4 class="fw-bold mb-0">56,310</h4>
+                                        </div>
+                                        <div class="icon-circle bg-info bg-opacity-10 text-info"><i class="fa-solid fa-gamepad"></i></div>
+                                    </div>
+                                    <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 14.8% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 7. Pending Requests -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">Pending Requests</span>
+                                            <h4 class="fw-bold mb-0">324</h4>
+                                        </div>
+                                        <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-clock"></i></div>
+                                    </div>
+                                    <span class="text-danger small mt-2 d-block"><i class="fa-solid fa-arrow-down"></i> 8.3% <span class="text-muted">vs. last week</span></span>
+                                </div>
+                            </div>
+                            <!-- 8. System Alerts -->
+                            <div class="col-xl-3 col-md-6">
+                                <div class="stat-card-box">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="text-muted small d-block mb-1">System Alerts</span>
+                                            <h4 class="fw-bold mb-0">3</h4>
+                                        </div>
+                                        <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                    </div>
+                                    <a href="#" class="text-info small mt-2 d-block text-decoration-none">View Details <i class="fa-solid fa-arrow-right"></i></a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-4 col-lg-5">
-                        <div class="card card-custom p-4">
-                            <h5 class="card-title mb-3">📥 የሚጠብቁ ዲፖዚቶች</h5>
+
+                    <!-- Quick Actions Sidebar Panel -->
+                    <div class="col-xl-3">
+                        <div class="card card-custom h-100">
+                            <h6 class="fw-bold mb-3">Quick Actions</h6>
+                            <div class="d-flex flex-column gap-2">
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-user-plus text-primary"></i> Add User</a>
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-gamepad text-success"></i> Create Game</a>
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-wallet text-warning"></i> New Deposit</a>
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-money-bill-transfer text-danger"></i> New Withdrawal</a>
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-bell text-info"></i> Send Notification</a>
+                                <a href="#" class="quick-action-btn"><i class="fa-solid fa-bullhorn text-primary"></i> Create Campaign</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row (Revenue Overview & Game Distribution) -->
+                <div class="row">
+                    <div class="col-xl-8">
+                        <div class="card card-custom">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">Revenue Overview</h6>
+                                <div class="d-flex gap-3 small text-muted">
+                                    <span><i class="fa-solid fa-circle text-success" style="font-size: 8px;"></i> Deposits</span>
+                                    <span><i class="fa-solid fa-circle text-info" style="font-size: 8px;"></i> Withdrawals</span>
+                                    <span><i class="fa-solid fa-circle text-primary" style="font-size: 8px;"></i> Revenue</span>
+                                </div>
+                            </div>
+                            <canvas id="revenueOverviewChart" height="110"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-xl-4">
+                        <div class="card card-custom">
+                            <h6 class="fw-bold mb-3">Game Distribution</h6>
+                            <div style="height: 180px; display: flex; justify-content: center;">
+                                <canvas id="gameDistributionChart"></canvas>
+                            </div>
+                            <div class="mt-3 small d-flex flex-column gap-1">
+                                <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-primary" style="font-size:8px;"></i> Bingo</span> <strong>35%</strong></div>
+                                <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-info" style="font-size:8px;"></i> Slots</span> <strong>25%</strong></div>
+                                <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-warning" style="font-size:8px;"></i> Card Games</span> <strong>15%</strong></div>
+                                <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-success" style="font-size:8px;"></i> Crash</span> <strong>10%</strong></div>
+                                <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-secondary" style="font-size:8px;"></i> Others</span> <strong>15%</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tables & Recent Activities Row -->
+                <div class="row">
+                    <!-- Top Games & Transactions Tables -->
+                    <div class="col-xl-8">
+                        <!-- Top Games Table -->
+                        <div class="card card-custom mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">Top Games</h6>
+                                <a href="#" class="text-primary small text-decoration-none">View All <i class="fa-solid fa-arrow-right"></i></a>
+                            </div>
                             <div class="table-responsive">
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th>መጠን</th>
-                                            <th>Ref ID</th>
-                                            <th>እርምጃ</th>
+                                            <th>#</th>
+                                            <th>Game</th>
+                                            <th>Players</th>
+                                            <th>Revenue</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="pendingDepositsTableBody">
-                                        {% if pending_deposits %}
-                                            {% for tx in pending_deposits %}
-                                            <tr id="tx-row-{{ tx.id }}">
-                                                <td>{{ tx.amount }}</td>
-                                                <td>{{ tx.transaction_ref or tx.reference_id }}</td>
-                                                <td>
-                                                    <button class="btn-custom bg-success text-white" onclick="updateTx({{ tx.id }}, 'approve')">ፍቀድ</button>
-                                                    <button class="btn-custom bg-danger text-white" onclick="updateTx({{ tx.id }}, 'reject')">ሰርዝ</button>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                        <tr><td colspan="3" class="text-center text-muted">የሚጠብቅ ጥያቄ የለም</td></tr>
-                                        {% endif %}
+                                    <tbody>
+                                        <tr><td>1</td><td><i class="fa-solid fa-gamepad text-warning"></i> Bingo</td><td>24,560</td><td>$18,450</td></tr>
+                                        <tr><td>2</td><td><i class="fa-solid fa-dice text-danger"></i> Slots</td><td>18,230</td><td>$12,870</td></tr>
+                                        <tr><td>3</td><td><i class="fa-solid fa-clone text-success"></i> Card Games</td><td>9,842</td><td>$7,230</td></tr>
+                                        <tr><td>4</td><td><i class="fa-solid fa-rocket text-info"></i> Crash</td><td>6,321</td><td>$5,120</td></tr>
+                                        <tr><td>5</td><td><i class="fa-solid fa-star text-warning"></i> Others</td><td>3,976</td><td>$3,060</td></tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <!-- Recent Deposits & Withdrawals -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card card-custom">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0">Recent Deposits</h6>
+                                        <a href="#" class="text-primary small text-decoration-none">View All</a>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="data-table">
+                                            <thead><tr><th>User</th><th>Amount</th><th>Time</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>user_4587</td><td>$50.00</td><td class="text-muted">2m ago</td></tr>
+                                                <tr><td>user_4586</td><td>$100.00</td><td class="text-muted">8m ago</td></tr>
+                                                <tr><td>user_4585</td><td>$25.00</td><td class="text-muted">14m ago</td></tr>
+                                                <tr><td>user_4584</td><td>$200.00</td><td class="text-muted">21m ago</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-custom">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="fw-bold mb-0">Recent Withdrawals</h6>
+                                        <a href="#" class="text-primary small text-decoration-none">View All</a>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="data-table">
+                                            <thead><tr><th>User</th><th>Amount</th><th>Time</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>user_4579</td><td>$120.00</td><td class="text-muted">5m ago</td></tr>
+                                                <tr><td>user_4578</td><td>$75.00</td><td class="text-muted">12m ago</td></tr>
+                                                <tr><td>user_4577</td><td>$200.00</td><td class="text-muted">18m ago</td></tr>
+                                                <tr><td>user_4576</td><td>$50.00</td><td class="text-muted">27m ago</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activities Feed Column -->
+                    <div class="col-xl-4">
+                        <div class="card card-custom">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0">Recent Activities</h6>
+                                <a href="#" class="text-primary small text-decoration-none">View All <i class="fa-solid fa-arrow-right"></i></a>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-success bg-opacity-15 text-success" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-user-plus"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">New user registered</span>
+                                            <span class="text-muted" style="font-size: 11px;">john_doe123</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">2m ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-warning bg-opacity-15 text-warning" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-wallet"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Deposit successful</span>
+                                            <span class="text-muted" style="font-size: 11px;">+ $50.00 (Telebirr)</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">5m ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-danger bg-opacity-15 text-danger" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Withdrawal requested</span>
+                                            <span class="text-muted" style="font-size: 11px;">- $120.00 (Bank)</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">12m ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-primary bg-opacity-15 text-primary" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-gamepad"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Game round completed</span>
+                                            <span class="text-muted" style="font-size: 11px;">Bingo #4587</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">15m ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-info bg-opacity-15 text-info" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-headset"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Support ticket created</span>
+                                            <span class="text-muted" style="font-size: 11px;">User #4581</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">20m ago</span>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="icon-circle bg-success bg-opacity-15 text-success" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-handshake"></i></div>
+                                        <div>
+                                            <span class="d-block fw-bold small">New affiliate registered</span>
+                                            <span class="text-muted" style="font-size: 11px;">affiliate01</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-muted" style="font-size: 11px;">25m ago</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. USERS TAB -->
-            <div class="tab-pane fade" id="users-tab">
-                <div class="card card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">👥 User Management & KYC</h5>
-                        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Add User</button>
-                    </div>
-                    <p class="text-muted">Manage all users, KYC verifications, active accounts, and suspended lists.</p>
-                </div>
-            </div>
-
-            <!-- 3. GAMES TAB -->
-            <div class="tab-pane fade" id="games-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🎮 Games, Rooms, Rounds & Winners</h5>
-                    <p class="text-muted">Monitor active bingo rooms, game rounds, winning tickets, and automated results.</p>
-                </div>
-            </div>
-
-            <!-- 4. FINANCE TAB -->
-            <div class="tab-pane fade" id="finance-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">💰 Finance, Wallets & Transactions</h5>
-                    <p class="text-muted">Overview of deposits, withdrawals, system wallet balances, and cash flows.</p>
-                </div>
-            </div>
-
-            <!-- 5. PAYMENTS TAB -->
-            <div class="tab-pane fade" id="payments-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">💳 Payment Gateways (Telebirr, CBE, API Logs)</h5>
-                    <p class="text-muted">Configure payment provider keys, webhook logs, and manual bank transfers.</p>
-                </div>
-            </div>
-
-            <!-- 6. BONUSES TAB -->
+            <!-- Other Tab Placeholders -->
             <div class="tab-pane fade" id="bonuses-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🎁 Bonuses & Promotions Management</h5>
-                    <p class="text-muted">Setup referral bonuses, deposit match offers, and promo codes.</p>
-                </div>
+                <div class="card card-custom p-4"><h5>Bonuses & Promotions</h5><p class="text-muted">Manage promotions and referral bonuses here.</p></div>
             </div>
-
-            <!-- 7. MARKETING TAB -->
-            <div class="tab-pane fade" id="marketing-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">📢 Marketing, Push Notifications & SMS Campaigns</h5>
-                    <p class="text-muted">Broadcast promotional messages, announcements, and banners to users.</p>
-                </div>
-            </div>
-
-            <!-- 8. AGENTS TAB -->
             <div class="tab-pane fade" id="agents-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🤝 Agents & Affiliates Network</h5>
-                    <p class="text-muted">Track agent commissions, sub-accounts, and performance payouts.</p>
-                </div>
+                <div class="card card-custom p-4"><h5>Agents & Affiliates</h5><p class="text-muted">Track agent networks and commissions.</p></div>
             </div>
-
-            <!-- 9. SUPPORT TAB -->
-            <div class="tab-pane fade" id="support-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🎧 Customer Support, Live Chat & Tickets</h5>
-                    <p class="text-muted">Resolve user complaints, support tickets, and live chat inquiries.</p>
-                </div>
-            </div>
-
-            <!-- 10. REPORTS TAB -->
             <div class="tab-pane fade" id="reports-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">📊 Financial Reports & Analytics</h5>
-                    <p class="text-muted">Export detailed CSV/PDF reports on revenue, taxes, and user growth.</p>
-                </div>
+                <div class="card card-custom p-4"><h5>Reports & Analytics</h5><p class="text-muted">View system financial reports.</p></div>
             </div>
-
-            <!-- 11. SECURITY TAB -->
             <div class="tab-pane fade" id="security-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🛡️ Security & IP Logs</h5>
-                    <p class="text-muted">Review blocked IPs, failed login attempts, and rate limiting logs.</p>
-                </div>
-            </div>
-
-            <!-- 12. ROLES TAB -->
-            <div class="tab-pane fade" id="roles-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">👨‍💼 Admin Roles & Permissions</h5>
-                    <p class="text-muted">Assign granular access controls and roles to administrative staff.</p>
-                </div>
-            </div>
-
-            <!-- 13. API TAB -->
-            <div class="tab-pane fade" id="api-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🔌 API & Webhooks Integrations</h5>
-                    <p class="text-muted">Manage external API keys, webhooks, and third-party integrations.</p>
-                </div>
-            </div>
-
-            <!-- 14. SETTINGS TAB -->
-            <div class="tab-pane fade" id="settings-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">⚙️ System General Settings</h5>
-                    <p class="text-muted">Configure platform maintenance mode, currency rules, and limits.</p>
-                </div>
-            </div>
-
-            <!-- 15. AUDIT LOGS TAB -->
-            <div class="tab-pane fade" id="audit-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">📜 Admin Audit Logs</h5>
-                    <p class="text-muted">Track all administrative actions, configuration changes, and deletions.</p>
-                </div>
-            </div>
-
-            <!-- 16. SYSTEM MONITORING TAB -->
-            <div class="tab-pane fade" id="monitoring-tab">
-                <div class="card card-custom p-4">
-                    <h5 class="mb-3">🗄️ System Monitoring & Server Health</h5>
-                    <p class="text-muted">Monitor CPU usage, RAM, database connections, and WebSocket workers.</p>
-                </div>
+                <div class="card card-custom p-4"><h5>Security & Logs</h5><p class="text-muted">IP logs and security settings.</p></div>
             </div>
 
         </div>
@@ -397,121 +694,75 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart & Actions Script -->
+    <!-- Charts Initialization Script -->
     <script>
         const socket = io();
 
-        // Sales Line Chart
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctx, {
+        // 1. Revenue Overview Line Chart
+        const revCtx = document.getElementById('revenueOverviewChart').getContext('2d');
+        new Chart(revCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                labels: ['Apr 20', 'Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26'],
+                datasets: [
+                    {
+                        label: 'Deposits',
+                        data: [30000, 45000, 38000, 52000, 60000, 75000, 85000],
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.05)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Withdrawals',
+                        data: [20000, 32000, 28000, 40000, 48000, 58000, 68000],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'transparent',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Revenue',
+                        data: [10000, 18000, 15000, 25000, 32000, 42000, 50000],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'transparent',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // 2. Game Distribution Donut Chart
+        const gameCtx = document.getElementById('gameDistributionChart').getContext('2d');
+        new Chart(gameCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Bingo', 'Slots', 'Card Games', 'Crash', 'Others'],
                 datasets: [{
-                    label: 'Revenue (ETB)',
-                    data: [20000, 22000, 25000, 30000, 35000, 45000, 38000, 40000, {{ total_revenue }}, 37000, 39000, 32000],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.4
+                    data: [35, 25, 15, 10, 15],
+                    backgroundColor: ['#2563eb', '#06b6d4', '#f59e0b', '#22c55e', '#64748b'],
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } }
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                cutout: '75%'
             }
         });
-
-        // Transaction Approve / Reject Handler Function
-        function updateTx(txId, action) {
-            const formData = new FormData();
-            formData.append('action', action);
-
-            fetch('/admin/transaction/action/' + txId, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    const row = document.getElementById(`tx-row-${txId}`);
-                    if(row) {
-                        row.style.transition = 'opacity 0.4s ease';
-                        row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 400);
-                    } else {
-                        location.reload();
-                    }
-                } else {
-                    alert('ስህተት ተፈጥሯል: ' + (data.message || 'እባክዎ እንደገና ይሞክሩ።'));
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
-            });
-        }
-
-        // User Status Toggle Helper Handler Function
-        function toggleUserStatus(userId, actionType) {
-            const formData = new FormData();
-            formData.append('action', actionType);
-
-            fetch('/admin/user/action/' + userId, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert('ስህተት: ' + (data.message || 'ክዋኔው አልተሳካም'));
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
-            });
-        }
-
-        // Add Balance Helper Handler Function
-        function openEditUser(userId) {
-            const amount = prompt("ለተጠቃሚው መጨመር የሚፈልጉትን የገንዘብ መጠን (ETB) ያስገቡ:");
-            if (amount !== null && amount.trim() !== "") {
-                const formData = new FormData();
-                formData.append('action', 'add_balance');
-                formData.append('amount', amount);
-
-                fetch('/admin/user/action/' + userId, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.success) {
-                        alert(data.message);
-                        location.reload();
-                    } else {
-                        alert('ስህተት: ' + (data.message || 'ገንዘብ መጨመር አልተቻለም'));
-                    }
-                })
-                .catch(err => {
-                    console.error('Error:', err);
-                    alert('የሰርቨር ግንኙነት ስህተት አጋጥሟል።');
-                });
-            }
-        }
 
         // Live Search Filter Handler
         document.getElementById('adminSearchInput').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#pendingDepositsTableBody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
+            // Implement global search filtering logic if needed
         });
     </script>
 </body>
