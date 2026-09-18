@@ -132,14 +132,13 @@ def apply_fabric_token():
         print("Telebirr Token API Error:", str(e))
         return None
 
- 
+
 def create_telebirr_order(amount, user_phone, out_trade_no):
     access_token = apply_fabric_token()
     if not access_token:
         return {"error": "Token generation failed"}
 
-    # ጌትዌዩ ከዚህ በታች ባለው መልኩ ብቻ ይጠቀሙ (ድጋሚ /payment/ እንዳይኖር)
-   url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
+    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
  
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
@@ -203,9 +202,6 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     except Exception as e:
         print("Telebirr Order API Exception:", str(e))
         return {"error": str(e)}
-
-        
-        
 
 
 def query_telebirr_order(out_trade_no):
@@ -272,6 +268,7 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=True)
     password = db.Column(db.String(255), nullable=True)
     balance = db.Column(db.Float, default=50.00)
+    is_active = db.Column(db.Boolean, default=True)  # የተጠቃሚውን ንቁ መሆን ወይም መታገድ ለመቆጣጠር
 
 
 class AdminUser(db.Model):
@@ -340,16 +337,22 @@ def handle_login_user(data):
         (User.email == identifier) | (User.phone == identifier) | (User.username == identifier) | (User.user_id == identifier)
     ).first()
 
-    if user and user.password == password:
-        emit('auth_response', {
-            'success': True,
-            'msg': 'እንኳን ደህና መጡ!',
-            'user_id': user.user_id,
-            'balance': user.balance,
-            'full_name': user.full_name
-        }, room=request.sid)
-    else:
-        emit('auth_response', {'success': False, 'msg': 'የተሳሳተ ኢሜይል/ስልክ/ዩዘርኔም ወይም የይለፍ ቃል!'}, room=request.sid)
+    if user:
+        if not user.is_active:
+            emit('auth_response', {'success': False, 'msg': 'አካውንትዎ ታግዷል! እባክዎ አስተዳዳሪውን ያነጋግሩ።'}, room=request.sid)
+            return
+
+        if user.password == password:
+            emit('auth_response', {
+                'success': True,
+                'msg': 'እንኳን ደህና መጡ!',
+                'user_id': user.user_id,
+                'balance': user.balance,
+                'full_name': user.full_name
+            }, room=request.sid)
+            return
+
+    emit('auth_response', {'success': False, 'msg': 'የተሳሳተ ኢሜይል/ስልክ/ዩዘርኔም ወይም የይለፍ ቃል!'}, room=request.sid)
 
 
 @socketio.on('register_user')
@@ -378,7 +381,8 @@ def handle_register_user(data):
             email=email,
             phone=phone,
             password=password,
-            balance=10.00
+            balance=10.00,
+            is_active=True
         )
         db.session.add(user)
         db.session.commit()
@@ -418,6 +422,10 @@ def handle_select_card(data):
     user = User.query.filter_by(user_id=user_id).first()
     if not user:
         emit('error_msg', {'msg': 'እባክዎ መጀመሪያ ይግቡ (Login)!'}, room=request.sid)
+        return
+
+    if not user.is_active:
+        emit('error_msg', {'msg': 'አካውንትዎ ታግዷል!'}, room=request.sid)
         return
 
     if float(user.balance) < card_price:
@@ -597,7 +605,6 @@ def index():
 @app.route('/create-telebirr-payment', methods=['POST'])
 def create_telebirr_payment():
     data = request.get_json() or {}
-    print("DEBUG - /create-telebirr-payment request.json data:", data)
     
     amount = data.get('amount')
     user_phone = data.get('phone') or data.get('user_phone')
@@ -622,7 +629,6 @@ def check_telebirr_order_route(out_trade_no):
 def telebirr_callback():
     try:
         data = request.get_json() or request.form.to_dict()
-        print("DEBUG - Telebirr Callback Received Data:", data)
         
         biz_content = data.get("biz_content", {})
         if isinstance(biz_content, str):
@@ -738,6 +744,50 @@ def admin_dashboard():
                            yearly_revenue=yearly_revenue,
                            pending_deposits=pending_deposits,
                            pending_withdrawals=pending_withdrawals)
+
+
+# ==========================================
+# New Admin Routes for User Management
+# ==========================================
+@app.route('/admin/users')
+def admin_users():
+    if not session.get('is_admin') and not session.get('admin_logged'):
+        return redirect(url_for('admin_login'))
+        
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    users_pagination = User.query.paginate(page=page, per_page=per_page, error_out=False)
+    users = users_pagination.items
+    
+    return render_template('admin_users.html', users=users, pagination=users_pagination)
+
+
+@app.route('/admin/user/action/<int:user_id>', methods=['POST'])
+def admin_user_action(user_id):
+    if not session.get('is_admin') and not session.get('admin_logged'):
+        return jsonify({'success': False, 'message': 'ዕለታዊ ፈቃድ የለዎትም (Unauthorized)'}), 403
+
+    user = User.query.get_or_404(user_id)
+    action = request.form.get('action')
+    
+    if action == 'suspend':
+        user.is_active = False
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'ተጠቃሚው ታግዷል (Suspended).'})
+    elif action == 'activate':
+        user.is_active = True
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'ተጠቃሚው እንደገና ገብቷል (Activated).'})
+    elif action == 'add_balance':
+        try:
+            amount = float(request.form.get('amount', 0))
+            user.balance += amount
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'ETB {amount} ተጠቃሚው አካውንት ላይ ተጨምሯል።'})
+        except ValueError:
+            return jsonify({'success': False, 'message': 'ልክ ያልሆነ የገንዘብ መጠን'})
+        
+    return jsonify({'success': False, 'message': 'ትክክለ አይደለም'})
 
 
 @app.route('/admin-login', methods=['GET', 'POST'])
