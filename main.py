@@ -5,7 +5,6 @@ from datetime import datetime
 import os
 import random
 import re
-import threading
 import time
 import traceback
 import base64
@@ -40,6 +39,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+# Gevent async_mode ከ SocketIO ጋር በትክክል እንዲመሳሰል ተደረገ
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8623843462:AAG7e74RbOdQF5N4lsT2EsO8XJ0Hy5TYjkM')
@@ -54,7 +54,7 @@ PROCESSED_TIDS = set()
 # ==========================================
 def generate_rsa_signature(payload_dict):
     """
-    የቴሌብር ፔይሎድ በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት (በተስተካከለ የቁልፍ ቅደም ተከተል)።
+    የቴሌብር ፔይሎድ በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት (በትክክለኛው የቁልፍ ቅደም ተከተል)።
     """
     if not CRYPTO_AVAILABLE:
         return "DUMMY_SIGNATURE_TO_BE_REPLACED"
@@ -85,7 +85,6 @@ def generate_rsa_signature(payload_dict):
                 if v is not None:
                     flat_dict[k] = str(v)
 
-        # ፊርማው በትክክል በፊደል ተራ እንዲሰለፍ ይደረጋል
         sorted_keys = sorted(flat_dict.keys())
         canonical_pairs = [f"{k}={flat_dict[k]}" for k in sorted_keys if flat_dict[k] != ""]
         canonical_content = "&".join(canonical_pairs)
@@ -136,8 +135,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     if not access_token:
         return {"error": "Token generation failed"}
 
-    url = "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder"
- 
+    gateway_url = os.environ.get("TELEBIRR_GATEWAY_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway/v1/merchant/preOrder")
     merchant_id = os.environ.get("MERCHANT_ID", "1688972571494400")
     merchant_code = os.environ.get("MERCHANT_CODE", "642077")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
@@ -189,7 +187,7 @@ def create_telebirr_order(amount, user_phone, out_trade_no):
     
     try:
         verify_ssl = os.environ.get('VERIFY_TELEBIRR_SSL', 'False').lower() == 'true'
-        response = requests.post(url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
+        response = requests.post(gateway_url, json=payload, headers=headers, verify=verify_ssl, timeout=30)
         
         if response.status_code != 200:
             print("Telebirr PreOrder Error Response:", response.text)
@@ -495,6 +493,7 @@ def background_game_loop():
 
                 while game_timer > 0:
                     socketio.emit('timer_update', {'time_left': game_timer, 'sold_count': len(sold_cards_in_round)})
+                    # Gevent-safe sleep ሰርቨሩ እንዳይዝግ ይረዳል
                     socketio.sleep(1)
                     game_timer -= 1
 
@@ -834,6 +833,7 @@ def admin_login():
 
 
 if __name__ == '__main__':
-    threading.Thread(target=background_game_loop, daemon=True).start()
+    # Gevent හරሃባዊ ዳራ ሉፕ ማስጀመር
+    socketio.start_background_task(background_game_loop)
     port = int(os.environ.get('PORT', 10000))
     socketio.run(app, host='0.0.0.0', port=port)
