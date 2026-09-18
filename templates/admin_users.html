@@ -1,0 +1,89 @@
+<div class="tab-pane fade show active" id="users-tab">
+    <div class="card card-custom p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">👥 የተጠቃሚዎች አስተዳደር (User Management)</h5>
+            <div class="search-box" style="width: 250px;">
+                <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                <input type="text" id="userSearchInput" placeholder="ተጠቃሚ ፈልግ...">
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="data-table table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>ስም / Username</th>
+                        <th>ስልክ ቁጥር</th>
+                        <th>ቀሪ ሒሳብ (Balance)</th>
+                        <th>ሁኔታ (Status)</th>
+                        <th>እርምጃዎች (Actions)</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    {% if users %}
+                        {% for u in users %}
+                        <tr id="user-row-{{ u.id }}">
+                            <td>#{{ u.id }}</td>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.phone }}</td>
+                            <td>{{ "%.2f"|format(u.balance) }} ETB</td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge bg-success">ንቁ (Active)</span>
+                                {% else %}
+                                    <span class="badge bg-danger">ታግዷል (Suspended)</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openEditUser({{ u.id }})" title="አስተካክል"><i class="fa-solid fa-pen"></i></button>
+                                {% if u.is_active %}
+                                    <button class="btn btn-sm btn-outline-danger" onclick="toggleUserStatus({{ u.id }}, 'suspend')" title="እገድ"><i class="fa-solid fa-ban"></i></button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-outline-success" onclick="toggleUserStatus({{ u.id }}, 'activate')" title="ክፈት"><i class="fa-solid fa-check"></i></button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">ምንም ተጠቃሚ አልተገኘም።</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Search for Users
+    document.getElementById('userSearchInput').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#userTableBody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    // Suspend / Activate User Function
+    function toggleUserStatus(userId, action) {
+        const formData = new FormData();
+        formData.append('action', action);
+
+        fetch('/admin/user/action/' + userId, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                location.reload();
+            } else {
+                alert('ስህተት: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+    }
+</script>
