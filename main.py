@@ -747,7 +747,7 @@ def admin_dashboard():
 
 
 # ==========================================
-# New Admin Routes for User Management
+# New Admin Routes for User & Transaction Management
 # ==========================================
 @app.route('/admin/users')
 def admin_users():
@@ -765,7 +765,7 @@ def admin_users():
 @app.route('/admin/user/action/<int:user_id>', methods=['POST'])
 def admin_user_action(user_id):
     if not session.get('is_admin') and not session.get('admin_logged'):
-        return jsonify({'success': False, 'message': 'ዕለታዊ ፈቃድ የለዎትም (Unauthorized)'}), 403
+        return jsonify({'success': False, 'message': 'ፈቃድ የለዎትም (Unauthorized)'}), 403
 
     user = User.query.get_or_404(user_id)
     action = request.form.get('action')
@@ -777,16 +777,39 @@ def admin_user_action(user_id):
     elif action == 'activate':
         user.is_active = True
         db.session.commit()
-        return jsonify({'success': True, 'message': 'ተጠቃሚው እንደገና ገብቷል (Activated).'})
+        return jsonify({'success': True, 'message': 'ተጠቃሚው ንቁ ሆኗል (Activated).'})
     elif action == 'add_balance':
         try:
             amount = float(request.form.get('amount', 0))
             user.balance += amount
             db.session.commit()
-            return jsonify({'success': True, 'message': f'ETB {amount} ተጠቃሚው አካውንት ላይ ተጨምሯል።'})
+            return jsonify({'success': True, 'message': f'ETB {amount} ተጨምሯል።'})
         except ValueError:
             return jsonify({'success': False, 'message': 'ልክ ያልሆነ የገንዘብ መጠን'})
         
+    return jsonify({'success': False, 'message': 'ትክክለ አይደለም'})
+
+
+@app.route('/admin/transaction/action/<int:tx_id>', methods=['POST'])
+def admin_transaction_action(tx_id):
+    if not session.get('is_admin') and not session.get('admin_logged'):
+        return jsonify({'success': False, 'message': 'ፈቃድ የለዎትም'}), 403
+
+    tx = Transaction.query.get_or_404(tx_id)
+    action = request.form.get('action')
+
+    if action == 'approve':
+        tx.status = 'completed'
+        user = User.query.filter_by(user_id=tx.user_id).first()
+        if user and tx.type == 'deposit':
+            user.balance = float(user.balance) + float(tx.amount)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'ክፍያው ተጸድቋል'})
+    elif action == 'reject':
+        tx.status = 'rejected'
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'ክፍያው ተሰርዟል'})
+
     return jsonify({'success': False, 'message': 'ትክክለ አይደለም'})
 
 
