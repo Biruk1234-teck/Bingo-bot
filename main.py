@@ -39,7 +39,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-# Gevent async_mode ከ SocketIO ጋር በትክክል እንዲመሳሰል ተደረገ
+# Gevent async_mode ከ SocketIO ጋር በትክکلی እንዲመሳሰል ተደረገ
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8623843462:AAG7e74RbOdQF5N4lsT2EsO8XJ0Hy5TYjkM')
@@ -493,7 +493,6 @@ def background_game_loop():
 
                 while game_timer > 0:
                     socketio.emit('timer_update', {'time_left': game_timer, 'sold_count': len(sold_cards_in_round)})
-                    # Gevent-safe sleep ሰርቨሩ እንዳይዝግ ይረዳል
                     socketio.sleep(1)
                     game_timer -= 1
 
@@ -677,8 +676,12 @@ def telebirr_callback():
         return jsonify({"code": -1, "msg": str(e)}), 400
 
 
+# ==========================================
+# Admin Web Routes & Dashboards
+# ==========================================
 @app.route('/admin', methods=['GET'])
 def admin_dashboard():
+    # ተጠቃሚው በአድሚንነት መግባቱን ወይም አለመግባቱን ማረጋገጥ
     if not session.get('is_admin') and not session.get('admin_logged'):
         return redirect(url_for('admin_login'))
     
@@ -731,6 +734,7 @@ def admin_dashboard():
         pending_deposits = []
         pending_withdrawals = []
 
+    # `admin.html` ፋይልን ከ templates ፎልደር ጠርቶ አስፈላጊውን ዳታ ማስተላለፍ
     return render_template('admin.html',
                            total_users=total_users,
                            total_orders=total_orders,
@@ -741,6 +745,32 @@ def admin_dashboard():
                            yearly_revenue=yearly_revenue,
                            pending_deposits=pending_deposits,
                            pending_withdrawals=pending_withdrawals)
+
+
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    error_msg = None
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        admin = AdminUser.query.filter((AdminUser.username == username) | (AdminUser.contact == username)).first()
+        if admin and admin.password == password:
+            session['admin_logged'] = True
+            session['is_admin'] = True
+            session['admin_name'] = username
+            return redirect(url_for('admin_dashboard'))
+        
+        elif password == ADMIN_SECRET_PASSWORD and (username == 'admin' or username == 'Biruk' or username == 'WolloAdmin2026!'):
+            session['admin_logged'] = True
+            session['is_admin'] = True
+            session['admin_name'] = username
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error_msg = 'የተሳሳተ መግቢያ ስም ወይም የይለፍ ቃል!'
+            
+    # የጌጥ/መግቢያ ገጹን በ templates ስር ካለ template መጥራት (ወይም admin.html መጠቀም)
+    return render_template('admin.html', error_msg=error_msg)
 
 
 @app.route('/admin/users')
@@ -805,31 +835,6 @@ def admin_transaction_action(tx_id):
         return jsonify({'success': True, 'message': 'ክፍያው ተሰርዟል'})
 
     return jsonify({'success': False, 'message': 'ትክክለ አይደለም'})
-
-
-@app.route('/admin-login', methods=['GET', 'POST'])
-def admin_login():
-    error_msg = None
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        admin = AdminUser.query.filter((AdminUser.username == username) | (AdminUser.contact == username)).first()
-        if admin and admin.password == password:
-            session['admin_logged'] = True
-            session['is_admin'] = True
-            session['admin_name'] = username
-            return redirect(url_for('admin_dashboard'))
-        
-        elif password == ADMIN_SECRET_PASSWORD and (username == 'admin' or username == 'Biruk' or username == 'WolloAdmin2026!'):
-            session['admin_logged'] = True
-            session['is_admin'] = True
-            session['admin_name'] = username
-            return redirect(url_for('admin_dashboard'))
-        else:
-            error_msg = 'የተሳሳተ መግቢያ ስም ወይም የይለፍ ቃል!'
-            
-    return render_template('admin_login.html', error_msg=error_msg)
 
 
 if __name__ == '__main__':
