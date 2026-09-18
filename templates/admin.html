@@ -207,7 +207,7 @@
             </div>
         </div>
         <ul class="nav flex-column mt-2">
-            <li class="nav-item"><a class="nav-link active" href="#"><span class="left-icon"><i class="fa-solid fa-house text-primary"></i> Dashboard</span></a></li>
+            <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_dashboard') }}"><span class="left-icon"><i class="fa-solid fa-house text-primary"></i> Dashboard</span></a></li>
             
             <!-- Users Dropdown -->
             <li class="nav-item">
@@ -217,10 +217,10 @@
                 </a>
                 <div class="collapse submenu" id="usersSubmenu">
                     <ul class="nav flex-column">
-                        <li><a class="nav-link" href="#">All Users</a></li>
+                        <li><a class="nav-link" href="{{ url_for('admin_users') }}">All Users</a></li>
                         <li><a class="nav-link" href="#">KYC</a></li>
-                        <li><a class="nav-link" href="#">Active Users</a></li>
-                        <li><a class="nav-link" href="#">Suspended Users</a></li>
+                        <li><a class="nav-link" href="{{ url_for('admin_users') }}">Active Users</a></li>
+                        <li><a class="nav-link" href="{{ url_for('admin_users') }}">Suspended Users</a></li>
                     </ul>
                 </div>
             </li>
@@ -322,30 +322,37 @@
                 <input type="text" placeholder="Search users, games, transactions...">
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span class="text-muted small"><i class="fa-regular fa-calendar"></i> Apr 26, 2026 10:24 AM</span>
-                <button class="btn btn-sm btn-dark position-relative"><i class="fa-regular fa-bell"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">3</span></button>
+                <span class="text-muted small"><i class="fa-regular fa-calendar"></i> <span id="current-date"></span></span>
+                <button class="btn btn-sm btn-dark position-relative"><i class="fa-regular fa-bell"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">{{ pending_deposits|length + pending_withdrawals|length }}</span></button>
                 <div class="dropdown">
                     <button class="btn btn-dark btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
                         <span class="bg-primary rounded-circle text-white d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 12px;">AD</span>
                         <div class="text-start lh-1">
-                            <span class="d-block fw-bold" style="font-size: 12px;">Admin</span>
+                            <span class="d-block fw-bold" style="font-size: 12px;">{{ session.get('admin_name', 'Admin') }}</span>
                             <span class="text-muted" style="font-size: 10px;">Super Admin</span>
                         </div>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                         <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user"></i> Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('admin_login') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
                     </ul>
                 </div>
             </div>
         </div>
 
+        {% if error_msg %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error_msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
         <!-- Welcome Banner -->
         <div class="card card-custom welcome-banner p-4 mb-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h3 class="fw-bold mb-1"><i class="fa-solid fa-crown text-warning"></i> Welcome Back, Admin!</h3>
+                    <h3 class="fw-bold mb-1"><i class="fa-solid fa-crown text-warning"></i> Welcome Back, {{ session.get('admin_name', 'Admin') }}!</h3>
                     <p class="text-muted mb-0 small text-white-50">Here's what's happening with your platform today.</p>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block">
@@ -364,24 +371,24 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="text-muted small d-block mb-1">Total Users</span>
-                                    <h4 class="fw-bold mb-0">125,860</h4>
+                                    <h4 class="fw-bold mb-0">{{ "{:,}".format(total_users) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-users"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 12.5% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> Registered</span>
                         </div>
                     </div>
-                    <!-- 2. Active Users -->
+                    <!-- 2. Active Users (or Monthly Revenue based on preference) -->
                     <div class="col-xl-3 col-md-6">
                         <div class="stat-card-box">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="text-muted small d-block mb-1">Active Users</span>
-                                    <h4 class="fw-bold mb-0">98,432</h4>
+                                    <span class="text-muted small d-block mb-1">Monthly Revenue</span>
+                                    <h4 class="fw-bold mb-0">{{ "ETB {:,.2f}".format(monthly_revenue) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-success bg-opacity-10 text-success"><i class="fa-solid fa-user-check"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 10.2% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> This Month</span>
                         </div>
                     </div>
                     <!-- 3. Total Deposits -->
@@ -389,38 +396,38 @@
                         <div class="stat-card-box">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="text-muted small d-block mb-1">Total Deposits</span>
-                                    <h4 class="fw-bold mb-0">$248,750</h4>
+                                    <span class="text-muted small d-block mb-1">Total Revenue</span>
+                                    <h4 class="fw-bold mb-0">{{ "ETB {:,.2f}".format(total_revenue) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-wallet"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 18.7% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> All time</span>
                         </div>
                     </div>
-                    <!-- 4. Total Withdrawals -->
+                    <!-- 4. Total Profit -->
                     <div class="col-xl-3 col-md-6">
                         <div class="stat-card-box">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="text-muted small d-block mb-1">Total Withdrawals</span>
-                                    <h4 class="fw-bold mb-0">$176,230</h4>
+                                    <span class="text-muted small d-block mb-1">Net Profit (25%)</span>
+                                    <h4 class="fw-bold mb-0">{{ "ETB {:,.2f}".format(total_profit) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-money-bill-transfer"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 16.3% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> Estimated</span>
                         </div>
                     </div>
-                    <!-- 5. Total Revenue -->
+                    <!-- 5. Daily Revenue -->
                     <div class="col-xl-3 col-md-6">
                         <div class="stat-card-box">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <span class="text-muted small d-block mb-1">Total Revenue</span>
-                                    <h4 class="fw-bold mb-0">$72,520</h4>
+                                    <span class="text-muted small d-block mb-1">Daily Revenue</span>
+                                    <h4 class="fw-bold mb-0">{{ "ETB {:,.2f}".format(daily_revenue) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-chart-line"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 22.1% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> Today</span>
                         </div>
                     </div>
                     <!-- 6. Games Played -->
@@ -429,11 +436,11 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="text-muted small d-block mb-1">Games Played</span>
-                                    <h4 class="fw-bold mb-0">56,310</h4>
+                                    <h4 class="fw-bold mb-0">{{ "{:,}".format(total_orders) }}</h4>
                                 </div>
                                 <div class="icon-circle bg-info bg-opacity-10 text-info"><i class="fa-solid fa-gamepad"></i></div>
                             </div>
-                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> 14.8% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-success small mt-2 d-block"><i class="fa-solid fa-arrow-up"></i> Total rounds</span>
                         </div>
                     </div>
                     <!-- 7. Pending Requests -->
@@ -442,11 +449,11 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="text-muted small d-block mb-1">Pending Requests</span>
-                                    <h4 class="fw-bold mb-0">324</h4>
+                                    <h4 class="fw-bold mb-0">{{ pending_deposits|length + pending_withdrawals|length }}</h4>
                                 </div>
                                 <div class="icon-circle bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-clock"></i></div>
                             </div>
-                            <span class="text-danger small mt-2 d-block"><i class="fa-solid fa-arrow-down"></i> 8.3% <span class="text-muted">vs. last week</span></span>
+                            <span class="text-danger small mt-2 d-block"><i class="fa-solid fa-arrow-down"></i> Action required</span>
                         </div>
                     </div>
                     <!-- 8. System Alerts -->
@@ -455,11 +462,11 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <span class="text-muted small d-block mb-1">System Alerts</span>
-                                    <h4 class="fw-bold mb-0">3</h4>
+                                    <h4 class="fw-bold mb-0">0</h4>
                                 </div>
                                 <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
                             </div>
-                            <a href="#" class="text-info small mt-2 d-block text-decoration-none">View Details <i class="fa-solid fa-arrow-right"></i></a>
+                            <a href="#" class="text-info small mt-2 d-block text-decoration-none">All Systems Normal</a>
                         </div>
                     </div>
                 </div>
@@ -470,7 +477,7 @@
                 <div class="card card-custom h-100 mb-4">
                     <h6 class="fw-bold mb-3">Quick Actions</h6>
                     <div class="d-flex flex-column gap-2">
-                        <a href="#" class="quick-action-btn"><i class="fa-solid fa-user-plus text-primary"></i> Add User</a>
+                        <a href="{{ url_for('admin_users') }}" class="quick-action-btn"><i class="fa-solid fa-user-plus text-primary"></i> Manage Users</a>
                         <a href="#" class="quick-action-btn"><i class="fa-solid fa-gamepad text-success"></i> Create Game</a>
                         <a href="#" class="quick-action-btn"><i class="fa-solid fa-wallet text-warning"></i> New Deposit</a>
                         <a href="#" class="quick-action-btn"><i class="fa-solid fa-money-bill-transfer text-danger"></i> New Withdrawal</a>
@@ -503,11 +510,7 @@
                         <canvas id="gameDistributionChart"></canvas>
                     </div>
                     <div class="mt-3 small d-flex flex-column gap-1">
-                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-primary" style="font-size:8px;"></i> Bingo</span> <strong>35%</strong></div>
-                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-info" style="font-size:8px;"></i> Slots</span> <strong>25%</strong></div>
-                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-warning" style="font-size:8px;"></i> Card Games</span> <strong>15%</strong></div>
-                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-success" style="font-size:8px;"></i> Crash</span> <strong>10%</strong></div>
-                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-secondary" style="font-size:8px;"></i> Others</span> <strong>15%</strong></div>
+                        <div class="d-flex justify-content-between"><span><i class="fa-solid fa-circle text-primary" style="font-size:8px;"></i> Bingo</span> <strong>100%</strong></div>
                     </div>
                 </div>
             </div>
@@ -519,7 +522,7 @@
                 <!-- Top Games Table -->
                 <div class="card card-custom mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold mb-0">Top Games</h6>
+                        <h6 class="fw-bold mb-0">Platform Games</h6>
                         <a href="#" class="text-primary small text-decoration-none">View All <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
                     <div class="table-responsive">
@@ -528,16 +531,12 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Game</th>
-                                    <th>Players</th>
-                                    <th>Revenue</th>
+                                    <th>Status</th>
+                                    <th>Total Rounds</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>1</td><td><i class="fa-solid fa-gamepad text-warning"></i> Bingo</td><td>24,560</td><td>$18,450</td></tr>
-                                <tr><td>2</td><td><i class="fa-solid fa-dice text-danger"></i> Slots</td><td>18,230</td><td>$12,870</td></tr>
-                                <tr><td>3</td><td><i class="fa-solid fa-clone text-success"></i> Card Games</td><td>9,842</td><td>$7,230</td></tr>
-                                <tr><td>4</td><td><i class="fa-solid fa-rocket text-info"></i> Crash</td><td>6,321</td><td>$5,120</td></tr>
-                                <tr><td>5</td><td><i class="fa-solid fa-star text-warning"></i> Others</td><td>3,976</td><td>$3,060</td></tr>
+                                <tr><td>1</td><td><i class="fa-solid fa-gamepad text-warning"></i> BK Bingo Pro</td><td><span class="badge bg-success">Active</span></td><td>{{ total_orders }}</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -548,17 +547,22 @@
                     <div class="col-md-6">
                         <div class="card card-custom">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0">Recent Deposits</h6>
+                                <h6 class="fw-bold mb-0">Pending Deposits</h6>
                                 <a href="#" class="text-primary small text-decoration-none">View All</a>
                             </div>
                             <div class="table-responsive">
                                 <table class="data-table">
-                                    <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead>
+                                    <thead><tr><th>User ID</th><th>Amount</th><th>Status</th></tr></thead>
                                     <tbody>
-                                        <tr><td>user_4587</td><td>$50.00</td><td><i class="fa-solid fa-mobile-screen text-success"></i> Telebirr</td><td class="text-muted">2m ago</td></tr>
-                                        <tr><td>user_4586</td><td>$100.00</td><td><i class="fa-solid fa-building-columns text-primary"></i> Bank</td><td class="text-muted">8m ago</td></tr>
-                                        <tr><td>user_4585</td><td>$25.00</td><td><i class="fa-solid fa-mobile-screen text-success"></i> Telebirr</td><td class="text-muted">14m ago</td></tr>
-                                        <tr><td>user_4584</td><td>$200.00</td><td><i class="fa-solid fa-globe text-info"></i> Gateway</td><td class="text-muted">21m ago</td></tr>
+                                        {% for tx in pending_deposits %}
+                                        <tr>
+                                            <td>{{ tx.user_id }}</td>
+                                            <td>ETB {{ tx.amount }}</td>
+                                            <td><span class="badge bg-warning text-dark">{{ tx.status }}</span></td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td colspan="3" class="text-center text-muted">ምንም የሚጠብቅ የገንዘብ ገቢ የለም</td></tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
@@ -567,17 +571,22 @@
                     <div class="col-md-6">
                         <div class="card card-custom">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold mb-0">Recent Withdrawals</h6>
+                                <h6 class="fw-bold mb-0">Pending Withdrawals</h6>
                                 <a href="#" class="text-primary small text-decoration-none">View All</a>
                             </div>
                             <div class="table-responsive">
                                 <table class="data-table">
-                                    <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead>
+                                    <thead><tr><th>User ID</th><th>Amount</th><th>Status</th></tr></thead>
                                     <tbody>
-                                        <tr><td>user_4579</td><td>$120.00</td><td><i class="fa-solid fa-building-columns text-primary"></i> Bank</td><td class="text-muted">5m ago</td></tr>
-                                        <tr><td>user_4578</td><td>$75.00</td><td><i class="fa-solid fa-mobile-screen text-success"></i> Telebirr</td><td class="text-muted">12m ago</td></tr>
-                                        <tr><td>user_4577</td><td>$200.00</td><td><i class="fa-solid fa-building-columns text-primary"></i> Bank</td><td class="text-muted">18m ago</td></tr>
-                                        <tr><td>user_4576</td><td>$50.00</td><td><i class="fa-solid fa-globe text-info"></i> Gateway</td><td class="text-muted">27m ago</td></tr>
+                                        {% for tx in pending_withdrawals %}
+                                        <tr>
+                                            <td>{{ tx.user_id }}</td>
+                                            <td>ETB {{ tx.amount }}</td>
+                                            <td><span class="badge bg-warning text-dark">{{ tx.status }}</span></td>
+                                        </tr>
+                                        {% else %}
+                                        <tr><td colspan="3" class="text-center text-muted">ምንም የሚጠብቅ የገንዘብ ማውጣት የለም</td></tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
@@ -590,69 +599,39 @@
             <div class="col-xl-4">
                 <div class="card card-custom">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold mb-0">Recent Activities</h6>
-                        <a href="#" class="text-primary small text-decoration-none">View All <i class="fa-solid fa-arrow-right"></i></a>
+                        <h6 class="fw-bold mb-0">System Summary</h6>
+                        <a href="{{ url_for('admin_users') }}" class="text-primary small text-decoration-none">Users List <i class="fa-solid fa-arrow-right"></i></a>
                     </div>
-                    <div class="d-flex flex-column">
+                    <div class="d-flex flex-column gap-3">
                         <div class="activity-item">
                             <div class="d-flex align-items-center gap-2">
-                                <div class="icon-circle bg-success bg-opacity-15 text-success" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-user-plus"></i></div>
+                                <div class="icon-circle bg-success bg-opacity-15 text-success" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-users"></i></div>
                                 <div>
-                                    <span class="d-block fw-bold small">New user registered</span>
-                                    <span class="text-muted" style="font-size: 11px;">john_doe123</span>
+                                    <span class="d-block fw-bold small">Total Registered Users</span>
+                                    <span class="text-muted" style="font-size: 11px;">Active Platform Accounts</span>
                                 </div>
                             </div>
-                            <span class="text-muted" style="font-size: 11px;">2m ago</span>
+                            <span class="fw-bold text-success">{{ total_users }}</span>
                         </div>
                         <div class="activity-item">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="icon-circle bg-warning bg-opacity-15 text-warning" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-wallet"></i></div>
                                 <div>
-                                    <span class="d-block fw-bold small">Deposit successful</span>
-                                    <span class="text-muted" style="font-size: 11px;">+ $50.00 (Telebirr)</span>
+                                    <span class="d-block fw-bold small">Total Deposits Value</span>
+                                    <span class="text-muted" style="font-size: 11px;">Completed Transactions</span>
                                 </div>
                             </div>
-                            <span class="text-muted" style="font-size: 11px;">5m ago</span>
-                        </div>
-                        <div class="activity-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="icon-circle bg-danger bg-opacity-15 text-danger" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
-                                <div>
-                                    <span class="d-block fw-bold small">Withdrawal requested</span>
-                                    <span class="text-muted" style="font-size: 11px;">- $120.00 (Bank)</span>
-                                </div>
-                            </div>
-                            <span class="text-muted" style="font-size: 11px;">12m ago</span>
+                            <span class="fw-bold text-warning">{{ "ETB {:,.2f}".format(total_revenue) }}</span>
                         </div>
                         <div class="activity-item">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="icon-circle bg-primary bg-opacity-15 text-primary" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-gamepad"></i></div>
                                 <div>
-                                    <span class="d-block fw-bold small">Game round completed</span>
-                                    <span class="text-muted" style="font-size: 11px;">Bingo #4587</span>
+                                    <span class="d-block fw-bold small">Total Game Bets</span>
+                                    <span class="text-muted" style="font-size: 11px;">Bingo Cards Played</span>
                                 </div>
                             </div>
-                            <span class="text-muted" style="font-size: 11px;">15m ago</span>
-                        </div>
-                        <div class="activity-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="icon-circle bg-info bg-opacity-15 text-info" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-headset"></i></div>
-                                <div>
-                                    <span class="d-block fw-bold small">Support ticket created</span>
-                                    <span class="text-muted" style="font-size: 11px;">User #4581</span>
-                                </div>
-                            </div>
-                            <span class="text-muted" style="font-size: 11px;">20m ago</span>
-                        </div>
-                        <div class="activity-item">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="icon-circle bg-success bg-opacity-15 text-success" style="width:32px; height:32px; font-size:12px;"><i class="fa-solid fa-handshake"></i></div>
-                                <div>
-                                    <span class="d-block fw-bold small">New affiliate registered</span>
-                                    <span class="text-muted" style="font-size: 11px;">affiliate01</span>
-                                </div>
-                            </div>
-                            <span class="text-muted" style="font-size: 11px;">25m ago</span>
+                            <span class="fw-bold text-primary">{{ total_orders }}</span>
                         </div>
                     </div>
                 </div>
@@ -664,31 +643,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart Scripts -->
     <script>
+        // Set Current Date dynamically
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
         // Revenue Overview Line Chart
         const revCtx = document.getElementById('revenueOverviewChart').getContext('2d');
         new Chart(revCtx, {
             type: 'line',
             data: {
-                labels: ['Apr 20', 'Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26'],
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [
                     {
-                        label: 'Deposits',
-                        data: [30000, 45000, 38000, 52000, 60000, 75000, 85000],
-                        borderColor: '#22c55e',
-                        backgroundColor: 'rgba(34, 197, 94, 0.05)',
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Withdrawals',
-                        data: [20000, 32000, 28000, 40000, 48000, 58000, 68000],
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'transparent',
-                        tension: 0.4
-                    },
-                    {
                         label: 'Revenue',
-                        data: [10000, 18000, 15000, 25000, 32000, 42000, 50000],
+                        data: [{{ daily_revenue }}, {{ monthly_revenue * 0.1 }}, {{ monthly_revenue * 0.2 }}, {{ monthly_revenue * 0.3 }}, {{ monthly_revenue * 0.4 }}, {{ monthly_revenue * 0.5 }}, {{ total_revenue }}],
                         borderColor: '#2563eb',
                         backgroundColor: 'transparent',
                         tension: 0.4
@@ -710,10 +677,10 @@
         new Chart(gameCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Bingo', 'Slots', 'Card Games', 'Crash', 'Others'],
+                labels: ['Bingo'],
                 datasets: [{
-                    data: [35, 25, 15, 10, 15],
-                    backgroundColor: ['#2563eb', '#06b6d4', '#f59e0b', '#22c55e', '#64748b'],
+                    data: [100],
+                    backgroundColor: ['#2563eb'],
                     borderWidth: 0
                 }]
             },
