@@ -54,7 +54,7 @@ PROCESSED_TIDS = set()
 # ==========================================
 def generate_rsa_signature(payload_dict):
     """
-    የቴሌብር ፔይሎድ በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት።
+    የቴሌብር ፔይሎድ በ RSA Private Key በመፈረም SHA256WithRSA ፊርማ ማመንጨት (በተስተካከለ የቁልፍ ቅደም ተከተል)።
     """
     if not CRYPTO_AVAILABLE:
         return "DUMMY_SIGNATURE_TO_BE_REPLACED"
@@ -85,6 +85,7 @@ def generate_rsa_signature(payload_dict):
                 if v is not None:
                     flat_dict[k] = str(v)
 
+        # ፊርማው በትክክል በፊደል ተራ እንዲሰለፍ ይደረጋል
         sorted_keys = sorted(flat_dict.keys())
         canonical_pairs = [f"{k}={flat_dict[k]}" for k in sorted_keys if flat_dict[k] != ""]
         canonical_content = "&".join(canonical_pairs)
@@ -101,9 +102,6 @@ def generate_rsa_signature(payload_dict):
 
 
 def apply_fabric_token():
-    """
-    ትክክለኛውን የቴሌብር applyh5token አገልግሎት መጠቀም
-    """
     base_url = os.environ.get("TELEBIRR_BASE_URL", "https://196.188.120.3:38443/apiaccess/payment/gateway")
     app_id = os.environ.get("FABRIC_APP_ID", "c4182ef8-9249-458a-985e-06d191f4d505")
     app_secret = os.environ.get("APP_SECRET", "fad0f06383c6297f545876694b974599")
@@ -268,7 +266,7 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=True)
     password = db.Column(db.String(255), nullable=True)
     balance = db.Column(db.Float, default=50.00)
-    is_active = db.Column(db.Boolean, default=True)  # የተጠቃሚውን ንቁ መሆን ወይም መታገድ ለመቆጣጠር
+    is_active = db.Column(db.Boolean, default=True)
 
 
 class AdminUser(db.Model):
@@ -746,9 +744,6 @@ def admin_dashboard():
                            pending_withdrawals=pending_withdrawals)
 
 
-# ==========================================
-# New Admin Routes for User & Transaction Management
-# ==========================================
 @app.route('/admin/users')
 def admin_users():
     if not session.get('is_admin') and not session.get('admin_logged'):
