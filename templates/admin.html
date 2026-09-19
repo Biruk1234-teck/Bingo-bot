@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BKBINGO Admin Panel</title>
+<style>
+:root{
+  --bg:#07122d; --panel:#0d1b3d; --panel2:#101f46; --line:#263b70;
+  --text:#f4f7ff; --muted:#aab7d4; --blue:#3157ff; --cyan:#16bde8;
+  --green:#20d49b; --yellow:#f5ad23; --purple:#9b45ff; --pink:#d82ac4; --red:#ef5367;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 45% -10%,#243a85 0,#0a1636 35%,#06112b 75%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;min-height:100vh}
+button,input{font:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;flex:0 0 245px;background:rgba(4,15,39,.94);border-right:1px solid #243766;padding:18px 14px;position:fixed;top:0;bottom:0;left:0;overflow:auto;z-index:20}
+.brand{height:62px;display:flex;align-items:center;gap:12px;padding:0 7px 14px;border-bottom:1px solid #1d315e;margin-bottom:14px}
+.logo{width:43px;height:43px;border-radius:12px;background:linear-gradient(135deg,#1cc4ff,#7d38ff);display:grid;place-items:center;font-size:24px;box-shadow:0 8px 25px #3d3cff55}
+.brand h1{font-size:26px;margin:0;font-weight:900;letter-spacing:-1px}.brand h1 span{color:#ffd23b}
+.brand small{display:block;color:#c7d0e8;font-size:10px;margin-top:2px;letter-spacing:.5px}
+.nav{margin-top:10px}.nav-section{margin:10px 0}
+.nav-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 9px;border-radius:9px;color:#eef2ff;font-weight:700;font-size:13px;cursor:pointer}
+.nav-item:hover,.nav-item.active{background:linear-gradient(90deg,#3430ff,#5034ee);box-shadow:0 8px 20px #302eff35}
+.nav-left{display:flex;align-items:center;gap:12px}.nav-icon{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;background:#222e59;font-size:14px}
+.active .nav-icon{background:rgba(255,255,255,.17)}
+.chev{font-size:15px;color:#b8c4e2}.sub{padding:3px 0 5px 43px}.sub div{font-size:12px;color:#b7c3dd;padding:6px 0;cursor:pointer}.sub div:hover{color:#fff}
+.main{margin-left:245px;width:calc(100% - 245px);min-width:0}
+.topbar{height:77px;border-bottom:1px solid #253867;display:flex;align-items:center;justify-content:space-between;padding:0 25px;background:rgba(6,17,43,.82);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.top-title{font-size:17px;font-weight:800}.top-title small{display:block;font-size:11px;color:#aebbd6;font-weight:500;margin-top:4px}
+.search{width:330px;height:37px;border:1px solid #38528d;border-radius:22px;background:#0a1738;color:white;padding:0 16px;outline:none;font-size:11px}.search::placeholder{color:#8f9dbc}
+.top-right{display:flex;align-items:center;gap:18px}.bell{position:relative;font-size:19px}.badge{position:absolute;right:-7px;top:-8px;background:#e84968;color:white;font-size:9px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center}
+.admin{display:flex;align-items:center;gap:10px}.avatar{width:37px;height:37px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#177bff,#263c91);font-weight:800}.admin strong{font-size:12px}.admin small{display:block;color:#98a7c6;font-size:10px;margin-top:2px}
+.content{padding:18px 17px 0}
+.hero{height:96px;border:1px solid #33538d;border-radius:9px;background:linear-gradient(90deg,#0c214d88,#122b5d66),url('https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1600&q=70') center/cover;position:relative;overflow:hidden;display:flex;align-items:center;padding:0 25px;margin-bottom:16px}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0c1b43e8,#0b1b3d77,transparent);pointer-events:none}
+.hero-text{position:relative;z-index:1}.hero h2{margin:0;font-size:23px}.hero p{margin:6px 0 0;color:#d1d8eb;font-size:12px}
+.hero-crown{position:relative;z-index:1;margin-right:17px;font-size:32px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.stat{min-height:113px;border-radius:9px;padding:17px;position:relative;overflow:hidden;border:1px solid #ffffff16;box-shadow:0 10px 25px #0002}
+.stat:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-25px;bottom:-38px;background:#fff1;filter:blur(1px)}
+.stat.blue{background:linear-gradient(135deg,#284fe2,#3159e9)}.stat.green{background:linear-gradient(135deg,#13a98a,#19a990)}.stat.gold{background:linear-gradient(135deg,#d8900d,#eaa421)}.stat.purple{background:linear-gradient(135deg,#7130c5,#8044dc)}
+.stat.pink{background:linear-gradient(135deg,#b81aa7,#d32bbb)}.stat.cyan{background:linear-gradient(135deg,#087fac,#0a9bc5)}.stat.red{background:linear-gradient(135deg,#db4355,#ed5269)}.stat.navy{background:linear-gradient(135deg,#263b76,#304986)}
+.stat-head{display:flex;align-items:center;gap:10px}.stat-icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ffffff28;font-size:18px}
+.stat label{font-size:11px;font-weight:600}.stat h3{font-size:21px;margin:7px 0 3px}.change{font-size:11px;font-weight:800}.up{color:#67ffb5}.down{color:#ff9aa8}.muted{color:#d6def0;font-weight:500}
+.stat small{font-size:9px;color:#d0d9eb}
+.body-grid{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:13px;margin-top:13px}
+.card{background:linear-gradient(180deg,#0e1d42,#0b1837);border:1px solid #2a4274;border-radius:9px;box-shadow:0 12px 28px #0002;overflow:hidden}
+.card-title{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;font-size:14px;font-weight:800}.legend{display:flex;gap:13px;color:#aebbd5;font-size:9px;font-weight:500}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.d1{background:#20d49b}.d2{background:#3569ff}.d3{background:#a14cff}
+.chart-wrap{padding:0 12px 10px}.chart{width:100%;height:174px;display:block}.axis{fill:#8d9bb9;font-size:9px}.gridline{stroke:#263b67;stroke-width:1}.line1{fill:none;stroke:#20d49b;stroke-width:3}.line2{fill:none;stroke:#3569ff;stroke-width:3}.line3{fill:none;stroke:#a14cff;stroke-width:3}.area{fill:#3569ff16}
+.donut-area{display:flex;align-items:center;justify-content:center;gap:19px;padding:12px 15px 24px}.donut{width:145px;height:145px;border-radius:50%;background:conic-gradient(#a14cff 0 35%,#168dd9 35% 60%,#f2ad24 60% 75%,#6ac445 75% 85%,#8d8bd6 85% 100%);position:relative}.donut:after{content:"";position:absolute;inset:35px;border-radius:50%;background:#0d1b3d}.donut-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:1;font-size:17px;font-weight:800}.donut-center small{display:block;font-size:10px;color:#aab8d3;font-weight:500;margin-top:-38px}.dist-list{font-size:10px;line-height:2.3;min-width:90px}.dist-list div{display:flex;justify-content:space-between;gap:12px;color:#d7def0}.dist-list span:first-child:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#a14cff;margin-right:6px}.dist-list div:nth-child(2) span:first-child:before{background:#168dd9}.dist-list div:nth-child(3) span:first-child:before{background:#f2ad24}.dist-list div:nth-child(4) span:first-child:before{background:#6ac445}.dist-list div:nth-child(5) span:first-child:before{background:#8d8bd6}
+.side-card .card-title{padding-bottom:10px}.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px 14px}.quick button{border:1px solid #2b4270;background:#12234a;color:#e9efff;border-radius:8px;padding:10px 7px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:7px;cursor:pointer}.quick button:hover{background:#1b3263}.qicon{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#2c63ff}
+.activity{border-top:1px solid #23365f}.activity-item{display:flex;gap:9px;padding:10px 12px;border-bottom:1px solid #1d3159}.activity-item:last-child{border-bottom:0}.aicon{width:30px;height:30px;border-radius:50%;background:#16345e;display:grid;place-items:center;font-size:14px;flex:0 0 auto}.activity-item strong{font-size:10px}.activity-item small{display:block;color:#92a1bf;font-size:9px;margin-top:3px}.ago{margin-left:auto;color:#7f8da9;font-size:8px;white-space:nowrap}
+.tables{display:grid;grid-template-columns:1fr 1.1fr 1.1fr;gap:13px;margin-top:13px;padding-bottom:14px}.table-card{min-width:0}.table{width:100%;border-collapse:collapse;font-size:9px}.table th{color:#8998b6;font-weight:600;text-align:left;padding:6px 10px;border-bottom:1px solid #243961}.table td{padding:7px 10px;border-bottom:1px solid #1b2d53;color:#dce4f5;white-space:nowrap}.table tr:last-child td{border-bottom:0}.game-name{display:flex;align-items:center;gap:7px}.game-icon{width:22px;height:22px;border-radius:6px;background:#3b55d9;display:grid;place-items:center}.view{color:#7e8cff;font-size:9px;cursor:pointer}
+.footer{border-top:1px solid #233863;padding:12px 17px;color:#9aa9c6;font-size:9px;display:flex;justify-content:space-between}.footer b{color:#cfd8ed}
+.menu-toggle{display:none;background:none;border:0;color:#fff;font-size:24px}
+@media(max-width:1150px){
+ .grid{grid-template-columns:repeat(2,1fr)}.body-grid{grid-template-columns:1fr}.side-card{display:grid;grid-template-columns:1fr 1fr;gap:13px;background:none;border:0;box-shadow:none}.side-card .card{background:linear-gradient(180deg,#0e1d42,#0b1837);border:1px solid #2a4274}.tables{grid-template-columns:1fr}
+}
+@media(max-width:800px){
+ .sidebar{transform:translateX(-100%);transition:.25s}.sidebar.open{transform:translateX(0)}.main{margin-left:0;width:100%}.menu-toggle{display:block}.topbar{padding:0 13px}.search{width:180px}.top-title{display:none}.content{padding:12px}.hero{height:90px}.grid{grid-template-columns:1fr 1fr}.side-card{display:block}.tables{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+ .grid{grid-template-columns:1fr}.search{width:130px}.admin>div:last-child{display:none}.hero h2{font-size:18px}.hero p{font-size:10px}.body-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">🎯</div><div><h1>BK<span>BINGO</span></h1><small>Admin Panel</small></div></div>
+  <nav class="nav">
+    <div class="nav-item active"><div class="nav-left"><span class="nav-icon">⌂</span>Dashboard</div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">👥</span>Users</div><span class="chev">⌄</span></div><div class="sub"><div>• &nbsp;All Users</div><div>• &nbsp;KYC</div><div>• &nbsp;Active Users</div><div>• &nbsp;Suspended Users</div></div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">🎮</span>Games</div><span class="chev">⌄</span></div><div class="sub"><div>• &nbsp;All Games</div><div>• &nbsp;Bingo</div><div>• &nbsp;Game Rounds</div><div>• &nbsp;Results</div><div>• &nbsp;Winners</div></div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">💰</span>Finance</div><span class="chev">⌄</span></div><div class="sub"><div>• &nbsp;Deposits</div><div>• &nbsp;Withdrawals</div><div>• &nbsp;Wallets</div><div>• &nbsp;Transactions</div><div>• &nbsp;Revenue</div></div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">▣</span>Payments</div><span class="chev">⌄</span></div><div class="sub"><div>• &nbsp;Telebirr</div><div>• &nbsp;Banks</div><div>• &nbsp;Gateways</div><div>• &nbsp;Payment Logs</div></div></div>
+    <div class="nav-item"><div class="nav-left"><span class="nav-icon">🎁</span>Bonuses &amp; Promotions</div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">📣</span>Marketing</div><span class="chev">⌄</span></div></div>
+    <div class="nav-item"><div class="nav-left"><span class="nav-icon">🤝</span>Agents &amp; Affiliates</div></div>
+    <div class="nav-section"><div class="nav-item"><div class="nav-left"><span class="nav-icon">🎧</span>Support</div><span class="chev">⌄</span></div></div>
+    <div class="nav-item"><div class="nav-left"><span class="nav-icon">▥</span>Reports &amp; Analytics</div></div>
+    <div class="nav-item"><div class="nav-left"><span class="nav-icon">🛡</span>Security</div></div>
+  </nav>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <div style="display:flex;align-items:center;gap:12px"><button class="menu-toggle" onclick="toggleMenu()">☰</button><div class="top-title">BKBINGO Admin Dashboard<small>Play • Win • Grow</small></div></div>
+  <input class="search" id="search" placeholder="Search users, games, transactions..." oninput="searchData()">
+  <div class="top-right"><div class="bell">🔔<span class="badge">3</span></div><div class="admin"><div class="avatar">AD</div><div><strong>Admin</strong><small>Super Admin</small></div><span>⌄</span></div></div>
+</header>
+
+<section class="content">
+  <div class="hero"><div class="hero-crown">👑</div><div class="hero-text"><h2>Welcome Back, Admin!</h2><p>Here's what's happening with your platform today.</p></div></div>
+
+  <div class="grid">
+    <div class="stat blue"><div class="stat-head"><div class="stat-icon">👥</div><label>Total Users</label></div><h3>125,860</h3><div class="change up">↑ 12.5%</div><small>vs. last week</small></div>
+    <div class="stat green"><div class="stat-head"><div class="stat-icon">👥</div><label>Active Users</label></div><h3>98,432</h3><div class="change up">↑ 10.2%</div><small>vs. last week</small></div>
+    <div class="stat gold"><div class="stat-head"><div class="stat-icon">💰</div><label>Total Deposits</label></div><h3>$248,750</h3><div class="change up">↑ 18.7%</div><small>vs. last week</small></div>
+    <div class="stat purple"><div class="stat-head"><div class="stat-icon">💳</div><label>Total Withdrawals</label></div><h3>$176,230</h3><div class="change up">↑ 16.3%</div><small>vs. last week</small></div>
+    <div class="stat pink"><div class="stat-head"><div class="stat-icon">♕</div><label>Total Revenue</label></div><h3>$72,520</h3><div class="change up">↑ 22.1%</div><small>vs. last week</small></div>
+    <div class="stat cyan"><div class="stat-head"><div class="stat-icon">🎮</div><label>Games Played</label></div><h3>56,310</h3><div class="change up">↑ 14.8%</div><small>vs. last week</small></div>
+    <div class="stat red"><div class="stat-head"><div class="stat-icon">◷</div><label>Pending Requests</label></div><h3>324</h3><div class="change down">↓ 8.3%</div><small>vs. last week</small></div>
+    <div class="stat navy"><div class="stat-head"><div class="stat-icon">🔔</div><label>System Alerts</label></div><h3>3</h3><div style="margin-top:12px;color:#9faed0;font-size:10px">View Details →</div></div>
+  </div>
+
+  <div class="body-grid">
+    <div class="card">
+      <div class="card-title">Revenue Overview <div class="legend"><span><i class="dot d1"></i>Deposits</span><span><i class="dot d2"></i>Withdrawals</span><span><i class="dot d3"></i>Revenue</span></div></div>
+      <div class="chart-wrap">
+        <svg class="chart" viewBox="0 0 700 210" preserveAspectRatio="none">
+          <g>
+            <line class="gridline" x1="42" y1="30" x2="680" y2="30"/><line class="gridline" x1="42" y1="70" x2="680" y2="70"/><line class="gridline" x1="42" y1="110" x2="680" y2="110"/><line class="gridline" x1="42" y1="150" x2="680" y2="150"/><line class="gridline" x1="42" y1="190" x2="680" y2="190"/>
+          </g>
+          <g class="axis"><text x="5" y="193">0</text><text x="2" y="153">20K</text><text x="2" y="113">40K</text><text x="2" y="73">60K</text><text x="2" y="33">80K</text>
+          <text x="45" y="207">Apr 20</text><text x="150" y="207">Apr 21</text><text x="255" y="207">Apr 22</text><text x="360" y="207">Apr 23</text><text x="465" y="207">Apr 24</text><text x="570" y="207">Apr 25</text><text x="650" y="207">Apr 26</text></g>
+          <path class="area" d="M45 145 L150 120 L255 130 L360 110 L465 82 L570 65 L675 45 L675 190 L45 190Z"/>
+          <polyline class="line1" points="45,155 150,138 255,145 360,128 465,106 570,85 675,72"/>
+          <polyline class="line2" points="45,135 150,112 255,120 360,99 465,78 570,58 675,47"/>
+          <polyline class="line3" points="45,125 150,78 255,90 360,65 465,42 570,24 675,10"/>
+          <g fill="#fff"><circle cx="45" cy="155" r="3"/><circle cx="150" cy="138" r="3"/><circle cx="255" cy="145" r="3"/><circle cx="360" cy="128" r="3"/><circle cx="465" cy="106" r="3"/><circle cx="570" cy="85" r="3"/><circle cx="675" cy="72" r="3"/></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Game Distribution</div>
+      <div class="donut-area"><div class="donut"><div class="donut-center">35%<small>Bingo</small></div></div><div class="dist-list"><div><span>Bingo</span><b>35%</b></div><div><span>Slots</span><b>25%</b></div><div><span>Card Games</span><b>15%</b></div><div><span>Crash</span><b>10%</b></div><div><span>Others</span><b>15%</b></div></div></div>
+    </div>
+  </div>
+
+  <div class="tables">
+    <div class="card table-card"><div class="card-title">Top Games <span class="view">View All →</span></div><table class="table"><thead><tr><th>#</th><th>Game</th><th>Players</th><th>Revenue</th></tr></thead><tbody>
+      <tr><td>1</td><td><div class="game-name"><span class="game-icon">⑧</span>Bingo</div></td><td>24,560</td><td>$18,450</td></tr><tr><td>2</td><td><div class="game-name"><span class="game-icon">🎰</span>Slots</div></td><td>18,230</td><td>$12,870</td></tr><tr><td>3</td><td><div class="game-name"><span class="game-icon">🃏</span>Card Games</div></td><td>9,842</td><td>$7,230</td></tr><tr><td>4</td><td><div class="game-name"><span class="game-icon">🚀</span>Crash</div></td><td>6,321</td><td>$5,120</td></tr><tr><td>5</td><td><div class="game-name"><span class="game-icon">★</span>Others</div></td><td>3,976</td><td>$3,060</td></tr>
+    </tbody></table></div>
+    <div class="card table-card"><div class="card-title">Recent Deposits <span class="view">View All →</span></div><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead><tbody>
+      <tr><td>user_4587</td><td>$50.00</td><td>🔵 Telebirr</td><td>2m ago</td></tr><tr><td>user_4586</td><td>$100.00</td><td>🏦 Bank</td><td>8m ago</td></tr><tr><td>user_4585</td><td>$25.00</td><td>🔵 Telebirr</td><td>14m ago</td></tr><tr><td>user_4584</td><td>$200.00</td><td>▣ Gateway</td><td>21m ago</td></tr><tr><td>user_4583</td><td>$40.00</td><td>🏦 Bank</td><td>30m ago</td></tr>
+    </tbody></table></div>
+    <div class="card table-card"><div class="card-title">Recent Withdrawals <span class="view">View All →</span></div><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead><tbody>
+      <tr><td>user_4579</td><td>$120.00</td><td>🏦 Bank</td><td>5m ago</td></tr><tr><td>user_4578</td><td>$75.00</td><td>🔵 Telebirr</td><td>12m ago</td></tr><tr><td>user_4577</td><td>$200.00</td><td>🏦 Bank</td><td>18m ago</td></tr><tr><td>user_4576</td><td>$50.00</td><td>▣ Gateway</td><td>27m ago</td></tr><tr><td>user_4575</td><td>$90.00</td><td>🔵 Telebirr</td><td>35m ago</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="body-grid">
+    <div class="card side-card">
+      <div><div class="card-title">Quick Actions</div><div class="quick"><button onclick="alert('Add User')"><span class="qicon">👤</span>Add User</button><button onclick="alert('Create Game')"><span class="qicon" style="background:#17c18e">🎮</span>Create Game</button><button onclick="alert('New Deposit')"><span class="qicon" style="background:#e7a31c">💰</span>New Deposit</button><button onclick="alert('New Withdrawal')"><span class="qicon" style="background:#ec5165">💸</span>New Withdrawal</button><button onclick="alert('Send Notification')"><span class="qicon" style="background:#8050dc">🔔</span>Send Notification</button><button onclick="alert('Create Campaign')"><span class="qicon" style="background:#17aebc">📣</span>Create Campaign</button></div></div>
+      <div><div class="card-title">Recent Activities <span class="view">View All →</span></div><div class="activity">
+        <div class="activity-item"><div class="aicon">👤</div><div><strong>New user registered</strong><small>john_doe123</small></div><span class="ago">2m ago</span></div>
+        <div class="activity-item"><div class="aicon">💰</div><div><strong>Deposit successful</strong><small>+ $50.00 (Telebirr)</small></div><span class="ago">5m ago</span></div>
+        <div class="activity-item"><div class="aicon">💸</div><div><strong>Withdrawal requested</strong><small>- $120.00 (Bank)</small></div><span class="ago">12m ago</span></div>
+        <div class="activity-item"><div class="aicon">⑧</div><div><strong>Game round completed</strong><small>Bingo #4587</small></div><span class="ago">15m ago</span></div>
+        <div class="activity-item"><div class="aicon">💬</div><div><strong>Support ticket created</strong><small>User #4581</small></div><span class="ago">20m ago</span></div>
+        <div class="activity-item"><div class="aicon">🤝</div><div><strong>New affiliate registered</strong><small>affiliate01</small></div><span class="ago">25m ago</span></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+<footer class="footer"><span>BKBINGO Admin Panel &nbsp; v1.0.0</span><span>🛡 Secure &nbsp;•&nbsp; Fast &nbsp;•&nbsp; Reliable</span></footer>
+</main>
+</div>
+<script>
+function toggleMenu(){document.getElementById('sidebar').classList.toggle('open')}
+document.querySelectorAll('.nav-section > .nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{const sub=item.nextElementSibling;if(sub) sub.style.display=sub.style.display==='none'?'block':'none'})
+});
+function searchData(){
+  const q=document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('.table tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none');
+}
+</script>
+</body>
+</html>
