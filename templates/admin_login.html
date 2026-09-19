@@ -2,78 +2,1402 @@
 <html lang="am">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Sign In - BKBINGO PRO</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+    <meta name="theme-color" content="#070b17">
+
+    <title>BKBINGO PRO | Admin Login</title>
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f172a;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .login-card {
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 12px;
+
+        :root {
+            --bg: #060914;
+            --bg2: #0b1224;
+            --card: rgba(18, 27, 49, 0.88);
+
+            --blue: #21a7ff;
+            --blue2: #1769ff;
+            --cyan: #36d9ff;
+
+            --gold: #ffc94a;
+            --gold2: #ff9f1c;
+
+            --white: #ffffff;
+            --muted: #91a0bb;
+
+            --border: rgba(255,255,255,0.10);
+        }
+
+        body {
+            min-height: 100vh;
+            font-family:
+                "Segoe UI",
+                "Noto Sans Ethiopic",
+                Tahoma,
+                Arial,
+                sans-serif;
+
+            color: var(--white);
+
+            background:
+                radial-gradient(
+                    circle at 15% 20%,
+                    rgba(23,105,255,.22),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at 85% 75%,
+                    rgba(0,210,255,.14),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    135deg,
+                    #050811 0%,
+                    #091125 45%,
+                    #050811 100%
+                );
+
+            overflow-x: hidden;
+        }
+
+        /* ------------------------------
+           BACKGROUND
+        ------------------------------ */
+
+        .background {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .grid {
+            position: absolute;
+            inset: 0;
+
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,.025) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,.025) 1px,
+                    transparent 1px
+                );
+
+            background-size: 45px 45px;
+
+            mask-image: linear-gradient(
+                to bottom,
+                black,
+                transparent
+            );
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: .35;
+        }
+
+        .orb.one {
+            width: 320px;
+            height: 320px;
+
+            top: -120px;
+            left: -100px;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(33,167,255,.55),
+                    transparent 68%
+                );
+
+            animation: float1 8s ease-in-out infinite;
+        }
+
+        .orb.two {
+            width: 400px;
+            height: 400px;
+
+            right: -160px;
+            bottom: -180px;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(255,201,74,.20),
+                    transparent 68%
+                );
+
+            animation: float2 10s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%,100% {
+                transform: translate(0,0);
+            }
+
+            50% {
+                transform: translate(25px,35px);
+            }
+        }
+
+        @keyframes float2 {
+            0%,100% {
+                transform: translate(0,0);
+            }
+
+            50% {
+                transform: translate(-30px,-25px);
+            }
+        }
+
+        /* ------------------------------
+           MAIN
+        ------------------------------ */
+
+        .page {
+            position: relative;
+            z-index: 2;
+
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 35px 20px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 1080px;
+
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+
+            min-height: 650px;
+
+            background: rgba(10,16,31,.72);
+
+            border: 1px solid var(--border);
+
+            border-radius: 30px;
+
+            overflow: hidden;
+
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+
+            box-shadow:
+                0 40px 100px rgba(0,0,0,.55),
+                inset 0 1px 0 rgba(255,255,255,.05);
+        }
+
+        /* ------------------------------
+           LEFT SIDE
+        ------------------------------ */
+
+        .visual {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 55px;
+
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    circle at 50% 45%,
+                    rgba(33,167,255,.16),
+                    transparent 45%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(20,39,76,.8),
+                    rgba(6,12,27,.9)
+                );
+
+            border-right: 1px solid var(--border);
+        }
+
+        .visual-content {
+            position: relative;
+            z-index: 3;
+
+            width: 100%;
+            text-align: center;
+        }
+
+        /* ------------------------------
+           3D LOGO
+        ------------------------------ */
+
+        .logo-3d {
+            position: relative;
+
+            width: 130px;
+            height: 130px;
+
+            margin: 0 auto 25px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 35px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #263d67,
+                    #0d1730
+                );
+
+            border: 1px solid rgba(255,255,255,.15);
+
+            transform:
+                perspective(500px)
+                rotateX(8deg)
+                rotateY(-8deg);
+
+            box-shadow:
+                20px 25px 35px rgba(0,0,0,.55),
+                inset 3px 3px 10px rgba(255,255,255,.08),
+                inset -5px -5px 12px rgba(0,0,0,.4);
+
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+
+        .logo-3d::before {
+            content: "";
+
+            position: absolute;
+
+            inset: 12px;
+
+            border-radius: 25px;
+
+            border: 1px solid rgba(54,217,255,.35);
+
+            box-shadow:
+                0 0 30px rgba(33,167,255,.18);
+        }
+
+        .logo-shield {
+            position: relative;
+
+            width: 58px;
+            height: 70px;
+
+            clip-path: polygon(
+                50% 0%,
+                95% 15%,
+                90% 70%,
+                50% 100%,
+                10% 70%,
+                5% 15%
+            );
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #ff4949,
+                    #a30000 60%,
+                    #560000
+                );
+
+            box-shadow:
+                7px 10px 15px rgba(0,0,0,.5);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-shield::after {
+            content: "B";
+
+            font-size: 42px;
+            font-weight: 900;
+
+            color: white;
+
+            text-shadow:
+                2px 3px 0 #680000,
+                0 0 15px rgba(255,255,255,.25);
+        }
+
+        @keyframes logoFloat {
+            0%,100% {
+                transform:
+                    perspective(500px)
+                    rotateX(8deg)
+                    rotateY(-8deg)
+                    translateY(0);
+            }
+
+            50% {
+                transform:
+                    perspective(500px)
+                    rotateX(5deg)
+                    rotateY(-4deg)
+                    translateY(-10px);
+            }
+        }
+
+        .brand-title {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -1px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff,
+                    #35c8ff,
+                    #1684ff
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+
+            text-shadow:
+                0 8px 30px rgba(33,167,255,.15);
+        }
+
+        .brand-pro {
+            color: var(--gold);
+
+            font-size: 16px;
+            vertical-align: top;
+
+            margin-left: 5px;
+        }
+
+        .tagline {
+            margin-top: 12px;
+
+            color: #9eabc1;
+
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        /* ------------------------------
+           FLOATING CARDS
+        ------------------------------ */
+
+        .floating-card {
+            position: absolute;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            padding: 11px 15px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(39,57,91,.85),
+                    rgba(10,17,34,.88)
+                );
+
+            border: 1px solid rgba(255,255,255,.12);
+
+            border-radius: 14px;
+
+            box-shadow:
+                0 15px 35px rgba(0,0,0,.35),
+                inset 0 1px 0 rgba(255,255,255,.06);
+
+            backdrop-filter: blur(12px);
+
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+
+        .floating-card strong {
+            display: block;
+            color: white;
+            font-size: 13px;
+        }
+
+        .floating-card span {
+            color: #8190aa;
+        }
+
+        .floating-icon {
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #238dff,
+                    #0e48ba
+                );
+
+            box-shadow:
+                0 6px 15px rgba(0,100,255,.25);
+        }
+
+        .card-one {
+            left: 35px;
+            top: 110px;
+
+            animation: cardOne 5s ease-in-out infinite;
+        }
+
+        .card-two {
+            right: 30px;
+            top: 190px;
+
+            animation: cardTwo 6s ease-in-out infinite;
+        }
+
+        .card-three {
+            left: 55px;
+            bottom: 105px;
+
+            animation: cardOne 7s ease-in-out infinite reverse;
+        }
+
+        @keyframes cardOne {
+            0%,100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+
+            50% {
+                transform: translateY(-12px) rotate(1deg);
+            }
+        }
+
+        @keyframes cardTwo {
+            0%,100% {
+                transform: translateY(0) rotate(2deg);
+            }
+
+            50% {
+                transform: translateY(10px) rotate(-1deg);
+            }
+        }
+
+        /* Bingo balls */
+
+        .ball {
+            position: absolute;
+
+            width: 45px;
+            height: 45px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            font-weight: 900;
+            font-size: 14px;
+
+            background:
+                radial-gradient(
+                    circle at 30% 25%,
+                    #ffffff,
+                    #e6eefc 18%,
+                    #278cff 45%,
+                    #073e9e 100%
+                );
+
+            color: #07152d;
+
+            box-shadow:
+                7px 10px 20px rgba(0,0,0,.45),
+                inset -5px -6px 10px rgba(0,0,0,.25),
+                inset 4px 4px 8px rgba(255,255,255,.65);
+        }
+
+        .ball-one {
+            right: 100px;
+            bottom: 110px;
+            animation: ballFloat 4s infinite ease-in-out;
+        }
+
+        .ball-two {
+            left: 115px;
+            top: 250px;
+
+            width: 32px;
+            height: 32px;
+
+            font-size: 10px;
+
+            animation: ballFloat 5s infinite ease-in-out reverse;
+        }
+
+        .ball-three {
+            right: 60px;
+            top: 90px;
+
+            width: 25px;
+            height: 25px;
+
+            font-size: 8px;
+
+            animation: ballFloat 6s infinite ease-in-out;
+        }
+
+        @keyframes ballFloat {
+            0%,100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-16px);
+            }
+        }
+
+        /* ------------------------------
+           RIGHT LOGIN
+        ------------------------------ */
+
+        .login-section {
+            display: flex;
+            align-items: center;
+
+            padding: 55px 48px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(20,30,52,.94),
+                    rgba(9,15,29,.96)
+                );
+        }
+
+        .login-content {
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            border: 1px solid #334155;
+            margin: auto;
         }
-        .login-card h2 { margin-top: 0; text-align: center; color: #38bdf8; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 14px; color: #94a3b8; }
+
+        .mobile-logo {
+            display: none;
+        }
+
+        .login-heading {
+            margin-bottom: 8px;
+
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .login-subtitle {
+            color: var(--muted);
+
+            font-size: 14px;
+
+            line-height: 1.7;
+
+            margin-bottom: 30px;
+        }
+
+        /* ERROR */
+
+        .error-msg {
+            margin-bottom: 18px;
+
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            color: #fecaca;
+
+            background:
+                rgba(239,68,68,.10);
+
+            border: 1px solid rgba(239,68,68,.25);
+
+            font-size: 13px;
+
+            text-align: center;
+        }
+
+        /* FORM */
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+
+            margin-bottom: 9px;
+
+            color: #cbd5e1;
+
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+
+            left: 15px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 20px;
+
+            color: #71809b;
+
+            font-size: 18px;
+
+            pointer-events: none;
+        }
+
         .form-group input {
             width: 100%;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: #fff;
-            box-sizing: border-box;
+
+            height: 54px;
+
+            padding:
+                0 45px 0 47px;
+
+            border-radius: 13px;
+
+            border: 1px solid #33445f;
+
+            background:
+                rgba(4,10,23,.75);
+
+            color: white;
+
             outline: none;
+
+            font-size: 14px;
+
+            transition: .25s;
+
+            box-shadow:
+                inset 0 2px 8px rgba(0,0,0,.20);
         }
-        .form-group input:focus { border-color: #2563eb; }
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
+
+        .form-group input::placeholder {
+            color: #53617a;
+        }
+
+        .form-group input:focus {
+            border-color: var(--blue);
+
+            background:
+                rgba(6,15,32,.95);
+
+            box-shadow:
+                0 0 0 4px rgba(33,167,255,.10),
+                0 8px 25px rgba(0,0,0,.2);
+        }
+
+        .password-toggle {
+            position: absolute;
+
+            right: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            border: 0;
+            background: transparent;
+
+            color: #71809b;
+
+            cursor: pointer;
+
+            font-size: 17px;
+        }
+
+        .password-toggle:hover {
+            color: white;
+        }
+
+        /* REMEMBER */
+
+        .login-options {
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            margin: -4px 0 25px;
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: #8190aa;
+
+            font-size: 12px;
+
             cursor: pointer;
         }
-        .btn-login:hover { background: #1d4ed8; }
-        .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-bottom: 15px; }
+
+        .remember input {
+            accent-color: var(--blue);
+        }
+
+        .security {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        /* BUTTON */
+
+        .btn-login {
+            position: relative;
+
+            width: 100%;
+            height: 56px;
+
+            border: none;
+            border-radius: 14px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2c86ff 0%,
+                    #1769ff 55%,
+                    #0c4dcc 100%
+                );
+
+            color: white;
+
+            font-size: 16px;
+            font-weight: 800;
+
+            cursor: pointer;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 15px 30px rgba(23,105,255,.25),
+                inset 0 1px 0 rgba(255,255,255,.22);
+
+            transition:
+                transform .2s,
+                box-shadow .2s;
+        }
+
+        .btn-login::before {
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -100%;
+
+            width: 70%;
+            height: 100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,.25),
+                    transparent
+                );
+
+            transform: skewX(-25deg);
+
+            transition: .6s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 20px 40px rgba(23,105,255,.35),
+                inset 0 1px 0 rgba(255,255,255,.25);
+        }
+
+        .btn-login:hover::before {
+            left: 140%;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-content {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* FOOTER */
+
+        .login-footer {
+            margin-top: 30px;
+
+            padding-top: 20px;
+
+            border-top: 1px solid rgba(255,255,255,.07);
+
+            text-align: center;
+
+            color: #64748b;
+
+            font-size: 11px;
+
+            line-height: 1.8;
+        }
+
+        .secure-badge {
+            display: inline-flex;
+
+            align-items: center;
+            gap: 6px;
+
+            margin-bottom: 5px;
+
+            color: #7f8da5;
+        }
+
+        .secure-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 10px #22c55e;
+        }
+
+        /* ------------------------------
+           RESPONSIVE
+        ------------------------------ */
+
+        @media (max-width: 850px) {
+
+            .page {
+                padding: 20px 14px;
+            }
+
+            .login-wrapper {
+                grid-template-columns: 1fr;
+
+                max-width: 500px;
+
+                min-height: auto;
+
+                border-radius: 24px;
+            }
+
+            .visual {
+                min-height: 330px;
+
+                padding: 35px 20px;
+
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .brand-title {
+                font-size: 32px;
+            }
+
+            .logo-3d {
+                width: 100px;
+                height: 100px;
+
+                border-radius: 28px;
+            }
+
+            .logo-shield {
+                transform: scale(.82);
+            }
+
+            .floating-card {
+                transform: scale(.82);
+            }
+
+            .card-one {
+                left: 12px;
+                top: 65px;
+            }
+
+            .card-two {
+                right: 8px;
+                top: 80px;
+            }
+
+            .card-three {
+                left: 15px;
+                bottom: 35px;
+            }
+
+            .ball-one {
+                right: 30px;
+                bottom: 30px;
+            }
+
+            .ball-two {
+                left: 45px;
+                top: 220px;
+            }
+
+            .ball-three {
+                right: 40px;
+                top: 40px;
+            }
+
+            .login-section {
+                padding: 38px 25px;
+            }
+        }
+
+        @media (max-width: 420px) {
+
+            .page {
+                padding: 10px;
+            }
+
+            .login-wrapper {
+                border-radius: 20px;
+            }
+
+            .visual {
+                min-height: 285px;
+            }
+
+            .brand-title {
+                font-size: 28px;
+            }
+
+            .tagline {
+                font-size: 12px;
+            }
+
+            .floating-card {
+                padding: 8px 10px;
+                font-size: 10px;
+            }
+
+            .floating-card strong {
+                font-size: 11px;
+            }
+
+            .floating-icon {
+                width: 27px;
+                height: 27px;
+            }
+
+            .login-section {
+                padding: 32px 20px;
+            }
+
+            .login-heading {
+                font-size: 25px;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="login-card">
-        <h2>🛡️ BKBINGO Admin</h2>
-        <p style="text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 25px;">እባክዎ ለመግባት መረጃዎትን ያስገቡ</p>
-        
-        {% if error %}
-        <div class="error-msg">{{ error }}</div>
-        {% endif %}
 
-        <!-- ትክክለኛው አድራሻ /admin-login ተደርጎ ተስተካክሏል -->
-        <form method="POST" action="/admin-login">
-            <div class="form-group">
-                <label>የአስተዳዳሪ ስም ወይም ዩዘርኔም (Username)</label>
-                <input type="text" name="username" required autocomplete="off">
+<body>
+
+<!-- BACKGROUND -->
+<div class="background">
+    <div class="grid"></div>
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+</div>
+
+
+<main class="page">
+
+    <div class="login-wrapper">
+
+        <!-- =====================================
+             LEFT / 3D BKBINGO PRESENTATION
+        ====================================== -->
+
+        <section class="visual">
+
+            <!-- Floating Information Cards -->
+
+            <div class="floating-card card-one">
+                <div class="floating-icon">🎯</div>
+                <div>
+                    <strong>Game Control</strong>
+                    <span>Manage Games</span>
+                </div>
             </div>
-            <div class="form-group">
-                <label>የሚስጥር ቁጥር (Password)</label>
-                <input type="password" name="password" required>
+
+
+            <div class="floating-card card-two">
+                <div class="floating-icon">💰</div>
+                <div>
+                    <strong>Finance</strong>
+                    <span>Transactions</span>
+                </div>
             </div>
-            <button type="submit" class="btn-login">ግባ (Sign In)</button>
-        </form>
+
+
+            <div class="floating-card card-three">
+                <div class="floating-icon">👥</div>
+                <div>
+                    <strong>Users</strong>
+                    <span>User Management</span>
+                </div>
+            </div>
+
+
+            <!-- Bingo Balls -->
+
+            <div class="ball ball-one">75</div>
+            <div class="ball ball-two">24</div>
+            <div class="ball ball-three">8</div>
+
+
+            <div class="visual-content">
+
+                <!-- 3D Logo -->
+                <div class="logo-3d">
+                    <div class="logo-shield"></div>
+                </div>
+
+
+                <!-- Brand -->
+
+                <h1 class="brand-title">
+                    BK<span style="color:#36d9ff;">BINGO</span>
+                    <sup class="brand-pro">PRO</sup>
+                </h1>
+
+
+                <p class="tagline">
+                    የBKBINGO PRO አስተዳደር ማዕከል
+                    <br>
+                    <span>
+                        Secure • Powerful • Professional
+                    </span>
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             RIGHT / LOGIN
+        ====================================== -->
+
+        <section class="login-section">
+
+            <div class="login-content">
+
+                <!-- Mobile brand -->
+
+                <div class="mobile-logo">
+                    <h1>BKBINGO <span>PRO</span></h1>
+                </div>
+
+
+                <h2 class="login-heading">
+                    እንኳን ደህና መጡ 👋
+                </h2>
+
+
+                <p class="login-subtitle">
+                    ወደ BKBINGO PRO Admin Panel ለመግባት
+                    የአስተዳዳሪ መረጃዎን ያስገቡ።
+                </p>
+
+
+                <!-- Flask Error -->
+
+                {% if error %}
+                <div class="error-msg">
+                    ⚠️ {{ error }}
+                </div>
+                {% endif %}
+
+
+                <!-- LOGIN FORM -->
+
+                <form
+                    method="POST"
+                    action="/admin-login"
+                    id="loginForm"
+                >
+
+                    <!-- USERNAME -->
+
+                    <div class="form-group">
+
+                        <label for="username">
+                            የአስተዳዳሪ ስም / Username
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                👤
+                            </span>
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                placeholder="Username ያስገቡ"
+                                required
+                                autocomplete="username"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            የሚስጥር ቁጥር / Password
+                        </label>
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                🔐
+                            </span>
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Password ያስገቡ"
+                                required
+                                autocomplete="current-password"
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="togglePassword"
+                                aria-label="Show password"
+                            >
+                                👁
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OPTIONS -->
+
+                    <div class="login-options">
+
+                        <label class="remember">
+                            <input
+                                type="checkbox"
+                                name="remember"
+                            >
+                            <span>አስታውሰኝ</span>
+                        </label>
+
+                        <span class="security">
+                            🔒 Secure Login
+                        </span>
+
+                    </div>
+
+
+                    <!-- LOGIN BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="btn-login"
+                        id="loginButton"
+                    >
+
+                        <span class="btn-content">
+
+                            <span id="buttonIcon">
+                                🔐
+                            </span>
+
+                            <span id="buttonText">
+                                ግባ (Sign In)
+                            </span>
+
+                        </span>
+
+                    </button>
+
+                </form>
+
+
+                <!-- FOOTER -->
+
+                <div class="login-footer">
+
+                    <div class="secure-badge">
+                        <span class="secure-dot"></span>
+                        BKBINGO PRO Secure Administration
+                    </div>
+
+                    <div>
+                        © 2026 BKBINGO PRO • All Rights Reserved
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
     </div>
+
+</main>
+
+
+<script>
+
+    /* =====================================
+       SHOW / HIDE PASSWORD
+    ====================================== */
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const togglePassword =
+        document.getElementById("togglePassword");
+
+
+    togglePassword.addEventListener("click", function () {
+
+        if (passwordInput.type === "password") {
+
+            passwordInput.type = "text";
+
+            togglePassword.textContent = "🙈";
+
+            togglePassword.setAttribute(
+                "aria-label",
+                "Hide password"
+            );
+
+        } else {
+
+            passwordInput.type = "password";
+
+            togglePassword.textContent = "👁";
+
+            togglePassword.setAttribute(
+                "aria-label",
+                "Show password"
+            );
+        }
+
+    });
+
+
+    /* =====================================
+       LOGIN BUTTON LOADING
+    ====================================== */
+
+    const loginForm =
+        document.getElementById("loginForm");
+
+    const loginButton =
+        document.getElementById("loginButton");
+
+    const buttonText =
+        document.getElementById("buttonText");
+
+    const buttonIcon =
+        document.getElementById("buttonIcon");
+
+
+    loginForm.addEventListener("submit", function () {
+
+        loginButton.disabled = true;
+
+        buttonText.textContent =
+            "በመግባት ላይ...";
+
+        buttonIcon.textContent = "⏳";
+
+        loginButton.style.opacity = "0.85";
+
+    });
+
+
+    /* =====================================
+       INPUT ANIMATION
+    ====================================== */
+
+    const inputs =
+        document.querySelectorAll("input[type='text'], input[type='password']");
+
+
+    inputs.forEach(function(input) {
+
+        input.addEventListener("focus", function() {
+
+            this.parentElement.style.transform =
+                "translateY(-1px)";
+
+        });
+
+        input.addEventListener("blur", function() {
+
+            this.parentElement.style.transform =
+                "translateY(0)";
+
+        });
+
+    });
+
+</script>
+
 </body>
 </html>
