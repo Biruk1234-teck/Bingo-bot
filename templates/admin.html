@@ -94,15 +94,62 @@ button,input{font:inherit}
 <section class="content">
   <div class="hero"><div class="hero-crown">👑</div><div class="hero-text"><h2>Welcome Back, Admin!</h2><p>Here's what's happening with your platform today.</p></div></div>
 
+  <!-- የተስተካከሉ የስታቲስቲክስ ሳጥኖች (Dynamic Stat Cards ከዳታቤዝ የሚመጡ) -->
   <div class="grid">
-    <div class="stat blue"><div class="stat-head"><div class="stat-icon">👥</div><label>Total Users</label></div><h3>125,860</h3><div class="change up">↑ 12.5%</div><small>vs. last week</small></div>
-    <div class="stat green"><div class="stat-head"><div class="stat-icon">👥</div><label>Active Users</label></div><h3>98,432</h3><div class="change up">↑ 10.2%</div><small>vs. last week</small></div>
-    <div class="stat gold"><div class="stat-head"><div class="stat-icon">💰</div><label>Total Deposits</label></div><h3>$248,750</h3><div class="change up">↑ 18.7%</div><small>vs. last week</small></div>
-    <div class="stat purple"><div class="stat-head"><div class="stat-icon">💳</div><label>Total Withdrawals</label></div><h3>$176,230</h3><div class="change up">↑ 16.3%</div><small>vs. last week</small></div>
-    <div class="stat pink"><div class="stat-head"><div class="stat-icon">♕</div><label>Total Revenue</label></div><h3>$72,520</h3><div class="change up">↑ 22.1%</div><small>vs. last week</small></div>
-    <div class="stat cyan"><div class="stat-head"><div class="stat-icon">🎮</div><label>Games Played</label></div><h3>56,310</h3><div class="change up">↑ 14.8%</div><small>vs. last week</small></div>
-    <div class="stat red"><div class="stat-head"><div class="stat-icon">◷</div><label>Pending Requests</label></div><h3>324</h3><div class="change down">↓ 8.3%</div><small>vs. last week</small></div>
-    <div class="stat navy"><div class="stat-head"><div class="stat-icon">🔔</div><label>System Alerts</label></div><h3>3</h3><div style="margin-top:12px;color:#9faed0;font-size:10px">View Details →</div></div>
+    <!-- ጠቅላላ ተጠቃሚዎች -->
+    <div class="stat blue">
+      <div class="stat-head"><div class="stat-icon">👥</div><label>Total Users</label></div>
+      <h3>{{ total_users | default(0) }}</h3>
+      <div class="change up">↑ Active</div><small>registered users</small>
+    </div>
+
+    <!-- ንቁ ተጠቃሚዎች -->
+    <div class="stat green">
+      <div class="stat-head"><div class="stat-icon">👥</div><label>Active Users</label></div>
+      <h3>{{ active_users | default(0) }}</h3>
+      <div class="change up">↑ Online</div><small>vs. last week</small>
+    </div>
+
+    <!-- ጠቅላላ ገቢ (Total Revenue) -->
+    <div class="stat gold">
+      <div class="stat-head"><div class="stat-icon">💰</div><label>Total Revenue</label></div>
+      <h3>{{ total_revenue | round(2) if total_revenue is defined else 0.00 }} ETB</h3>
+      <div class="change up">Total</div><small>all-time deposits</small>
+    </div>
+
+    <!-- ጠቅላላ ክፍያ (Total Withdrawals) -->
+    <div class="stat purple">
+      <div class="stat-head"><div class="stat-icon">💳</div><label>Total Withdrawals</label></div>
+      <h3>{{ total_withdrawals | round(2) if total_withdrawals is defined else 0.00 }} ETB</h3>
+      <div class="change up">Paid out</div><small>vs. last week</small>
+    </div>
+
+    <!-- ጠቅላላ ትርፍ (Total Profit - 25%) -->
+    <div class="stat pink">
+      <div class="stat-head"><div class="stat-icon">♕</div><label>Total Profit</label></div>
+      <h3>{{ total_profit | round(2) if total_profit is defined else 0.00 }} ETB</h3>
+      <div class="change up">25% Cut</div><small>platform share</small>
+    </div>
+
+    <!-- ጠቅላላ ጨዋታዎች (Games Played) -->
+    <div class="stat cyan">
+      <div class="stat-head"><div class="stat-icon">🎮</div><label>Total Orders</label></div>
+      <h3>{{ total_orders | default(0) }}</h3>
+      <div class="change up">Games</div><small>played rounds</small>
+    </div>
+
+    <!-- የሚጠብቁ ጥያቄዎች (Pending Requests) -->
+    <div class="stat red">
+      <div class="stat-head"><div class="stat-icon">◷</div><label>Pending Requests</label></div>
+      <h3>{{ pending_count | default(0) }}</h3>
+      <div class="change down">Action needed</div><small>deposits/withdrawals</small>
+    </div>
+
+    <!-- የስርዓት ማስጠንቀቂያዎች (System Alerts) -->
+    <div class="stat navy">
+      <div class="stat-head"><div class="stat-icon">🔔</div><label>System Alerts</label></div>
+      <h3>3</h3><div style="margin-top:12px;color:#9faed0;font-size:10px">View Details →</div>
+    </div>
   </div>
 
   <div class="body-grid">
@@ -130,15 +177,47 @@ button,input{font:inherit}
     </div>
   </div>
 
+  <!-- የሰንጠረዥ እና የጥያቄዎች ክፍሎች (Tables & Pending Requests) -->
   <div class="tables">
     <div class="card table-card"><div class="card-title">Top Games <span class="view">View All →</span></div><table class="table"><thead><tr><th>#</th><th>Game</th><th>Players</th><th>Revenue</th></tr></thead><tbody>
-      <tr><td>1</td><td><div class="game-name"><span class="game-icon">⑧</span>Bingo</div></td><td>24,560</td><td>$18,450</td></tr><tr><td>2</td><td><div class="game-name"><span class="game-icon">🎰</span>Slots</div></td><td>18,230</td><td>$12,870</td></tr><tr><td>3</td><td><div class="game-name"><span class="game-icon">🃏</span>Card Games</div></td><td>9,842</td><td>$7,230</td></tr><tr><td>4</td><td><div class="game-name"><span class="game-icon">🚀</span>Crash</div></td><td>6,321</td><td>$5,120</td></tr><tr><td>5</td><td><div class="game-name"><span class="game-icon">★</span>Others</div></td><td>3,976</td><td>$3,060</td></tr>
+      <tr><td>1</td><td><div class="game-name"><span class="game-icon">⑧</span>Bingo</div></td><td>24,560</td><td>18,450 ETB</td></tr><tr><td>2</td><td><div class="game-name"><span class="game-icon">🎰</span>Slots</div></td><td>18,230</td><td>12,870 ETB</td></tr><tr><td>3</td><td><div class="game-name"><span class="game-icon">🃏</span>Card Games</div></td><td>9,842</td><td>7,230 ETB</td></tr><tr><td>4</td><td><div class="game-name"><span class="game-icon">🚀</span>Crash</div></td><td>6,321</td><td>5,120 ETB</td></tr><tr><td>5</td><td><div class="game-name"><span class="game-icon">★</span>Others</div></td><td>3,976</td><td>3,060 ETB</td></tr>
     </tbody></table></div>
-    <div class="card table-card"><div class="card-title">Recent Deposits <span class="view">View All →</span></div><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead><tbody>
-      <tr><td>user_4587</td><td>$50.00</td><td>🔵 Telebirr</td><td>2m ago</td></tr><tr><td>user_4586</td><td>$100.00</td><td>🏦 Bank</td><td>8m ago</td></tr><tr><td>user_4585</td><td>$25.00</td><td>🔵 Telebirr</td><td>14m ago</td></tr><tr><td>user_4584</td><td>$200.00</td><td>▣ Gateway</td><td>21m ago</td></tr><tr><td>user_4583</td><td>$40.00</td><td>🏦 Bank</td><td>30m ago</td></tr>
-    </tbody></table></div>
+
+    <!-- የገንዘብ ማስቀመጫ ጥያቄዎች (Pending Deposits Table) -->
+    <div class="card table-card">
+      <div class="card-title">Pending Deposits <span class="view">View All →</span></div>
+      <table class="table">
+        <thead>
+          <tr><th>User ID</th><th>Amount</th><th>Time</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          {% if pending_deposits %}
+            {% for tx in pending_deposits %}
+            <tr>
+              <td>{{ tx.user_id }}</td>
+              <td>{{ tx.amount }} ETB</td>
+              <td>{{ tx.created_at.strftime('%H:%M') if tx.created_at else 'Recent' }}</td>
+              <td>
+                <form action="{{ url_for('admin_transaction_action', tx_id=tx.id) if url_for else '#' }}" method="POST" style="display:inline;">
+                  <input type="hidden" name="action" value="approve">
+                  <button type="submit" style="background:#20d49b; color:#fff; border:none; padding:3px 6px; border-radius:3px; cursor:pointer; font-size:8px;">ፍቀድ</button>
+                </form>
+                <form action="{{ url_for('admin_transaction_action', tx_id=tx.id) if url_for else '#' }}" method="POST" style="display:inline;">
+                  <input type="hidden" name="action" value="reject">
+                  <button type="submit" style="background:#ef5367; color:#fff; border:none; padding:3px 6px; border-radius:3px; cursor:pointer; font-size:8px;">ሰርዝ</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="4" style="text-align:center; color:#aab7d4;">ምንም የሚጠብቅ የክፍያ ጥያቄ የለም።</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
     <div class="card table-card"><div class="card-title">Recent Withdrawals <span class="view">View All →</span></div><table class="table"><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Time</th></tr></thead><tbody>
-      <tr><td>user_4579</td><td>$120.00</td><td>🏦 Bank</td><td>5m ago</td></tr><tr><td>user_4578</td><td>$75.00</td><td>🔵 Telebirr</td><td>12m ago</td></tr><tr><td>user_4577</td><td>$200.00</td><td>🏦 Bank</td><td>18m ago</td></tr><tr><td>user_4576</td><td>$50.00</td><td>▣ Gateway</td><td>27m ago</td></tr><tr><td>user_4575</td><td>$90.00</td><td>🔵 Telebirr</td><td>35m ago</td></tr>
+      <tr><td>user_4579</td><td>120.00 ETB</td><td>🏦 Bank</td><td>5m ago</td></tr><tr><td>user_4578</td><td>75.00 ETB</td><td>🔵 Telebirr</td><td>12m ago</td></tr><tr><td>user_4577</td><td>200.00 ETB</td><td>🏦 Bank</td><td>18m ago</td></tr><tr><td>user_4576</td><td>50.00 ETB</td><td>▣ Gateway</td><td>27m ago</td></tr><tr><td>user_4575</td><td>90.00 ETB</td><td>🔵 Telebirr</td><td>35m ago</td></tr>
     </tbody></table></div>
   </div>
 
@@ -147,8 +226,8 @@ button,input{font:inherit}
       <div><div class="card-title">Quick Actions</div><div class="quick"><button onclick="alert('Add User')"><span class="qicon">👤</span>Add User</button><button onclick="alert('Create Game')"><span class="qicon" style="background:#17c18e">🎮</span>Create Game</button><button onclick="alert('New Deposit')"><span class="qicon" style="background:#e7a31c">💰</span>New Deposit</button><button onclick="alert('New Withdrawal')"><span class="qicon" style="background:#ec5165">💸</span>New Withdrawal</button><button onclick="alert('Send Notification')"><span class="qicon" style="background:#8050dc">🔔</span>Send Notification</button><button onclick="alert('Create Campaign')"><span class="qicon" style="background:#17aebc">📣</span>Create Campaign</button></div></div>
       <div><div class="card-title">Recent Activities <span class="view">View All →</span></div><div class="activity">
         <div class="activity-item"><div class="aicon">👤</div><div><strong>New user registered</strong><small>john_doe123</small></div><span class="ago">2m ago</span></div>
-        <div class="activity-item"><div class="aicon">💰</div><div><strong>Deposit successful</strong><small>+ $50.00 (Telebirr)</small></div><span class="ago">5m ago</span></div>
-        <div class="activity-item"><div class="aicon">💸</div><div><strong>Withdrawal requested</strong><small>- $120.00 (Bank)</small></div><span class="ago">12m ago</span></div>
+        <div class="activity-item"><div class="aicon">💰</div><div><strong>Deposit successful</strong><small>+ 50.00 ETB (Telebirr)</small></div><span class="ago">5m ago</span></div>
+        <div class="activity-item"><div class="aicon">💸</div><div><strong>Withdrawal requested</strong><small>- 120.00 ETB (Bank)</small></div><span class="ago">12m ago</span></div>
         <div class="activity-item"><div class="aicon">⑧</div><div><strong>Game round completed</strong><small>Bingo #4587</small></div><span class="ago">15m ago</span></div>
         <div class="activity-item"><div class="aicon">💬</div><div><strong>Support ticket created</strong><small>User #4581</small></div><span class="ago">20m ago</span></div>
         <div class="activity-item"><div class="aicon">🤝</div><div><strong>New affiliate registered</strong><small>affiliate01</small></div><span class="ago">25m ago</span></div>
